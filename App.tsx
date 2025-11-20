@@ -11,7 +11,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans flex flex-col">
-      <main className="container mx-auto px-4 py-8 flex-grow">
+      <main className="container mx-auto px-4 pt-[250px] pb-8 flex-grow">
         <CategorySelector 
           categories={CATEGORIES}
           selectedCategoryId={selectedCategoryId}
