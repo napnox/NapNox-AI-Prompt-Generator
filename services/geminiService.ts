@@ -3,10 +3,21 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { PromptRequest, PromptResponse, GeneratedPrompt } from '../types';
 import { CATEGORIES } from '../constants';
 
-const API_KEY = process.env.API_KEY;
+// Safely access process.env if available, otherwise use the provided fallback key.
+// This ensures the app works immediately upon deployment even if env vars aren't set yet.
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY || 'AIzaSyDq_ltIlf3kS8_xALNuNtWiEJPaoILJW04';
+  } catch (e) {
+    // Fallback for environments where process is not defined
+    return 'AIzaSyDq_ltIlf3kS8_xALNuNtWiEJPaoILJW04';
+  }
+};
+
+const API_KEY = getApiKey();
 
 if (!API_KEY) {
-  console.warn("API_KEY environment variable not set. Using mock data.");
+  console.warn("API_KEY not found. Using mock data.");
 }
 
 const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
@@ -14,8 +25,12 @@ const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 function renderTemplate(template: string, data: Record<string, any>): string {
   let rendered = template;
   for (const key in data) {
+    // Create a regex to replace all occurrences of the placeholder
     const regex = new RegExp(`{{${key}}}`, 'g');
-    rendered = rendered.replace(regex, data[key] || `(not specified)`);
+    const value = data[key];
+    // Use the value if present, otherwise use an empty string to avoid "(not specified)" in the prompt
+    const replacement = (value !== undefined && value !== null) ? String(value) : '';
+    rendered = rendered.replace(regex, replacement);
   }
   return rendered;
 }
@@ -24,8 +39,8 @@ const generateMockPrompts = (request: PromptRequest): PromptResponse => {
     const category = CATEGORIES.find(c => c.id === request.category);
     const prompts: GeneratedPrompt[] = Array.from({ length: request.numVariations }).map((_, i) => ({
         id: `mock-${Date.now()}-${i}`,
-        text: `This is a mock prompt variation #${i + 1} for a ${request.subtype} about "${request.inputText}". It would use the ${category?.name} template with filters like ${Object.values(request.filters).join(', ')}.`,
-        metadata: { tags: [request.subtype, request.platform] },
+        text: `[MOCK RESULT] This is a placeholder because the API call failed.\n\nVariation #${i + 1} for a ${request.subtype} about "${request.inputText}".`,
+        metadata: { tags: [request.subtype, request.platform, 'mock'] },
     }));
 
     return {
@@ -74,7 +89,7 @@ export const generatePrompts = async (request: PromptRequest): Promise<PromptRes
                             properties: {
                                 prompt_text: {
                                     type: Type.STRING,
-                                    description: 'The full, detailed text of the generated prompt.',
+                                    description: 'The full, detailed text of the generated prompt. Use markdown formatting (bold keys) for readability.',
                                 },
                                 tags: {
                                     type: Type.ARRAY,
