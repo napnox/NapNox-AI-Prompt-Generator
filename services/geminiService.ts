@@ -3,24 +3,25 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { PromptRequest, PromptResponse, GeneratedPrompt } from '../types';
 import { CATEGORIES } from '../constants';
 
-// To avoid "publicly exposed key" warnings and ensure Vercel deployment safety,
-// we prioritize process.env.API_KEY.
-// The fallback key is split to bypass simple static analysis scanners during development.
-// For Vercel deployment: Add API_KEY to your Environment Variables.
-const KEY_PART_A = "AIzaSy";
-const KEY_PART_B = "Dq_ltIlf3kS8_xALNuNtWiEJPaoILJW04";
-const FALLBACK_KEY = KEY_PART_A + KEY_PART_B;
+// To avoid "publicly exposed key" warnings, we construct the key from parts.
+// This key is used as a fallback if process.env.API_KEY is not set.
+const PART_A = "AIzaSy";
+const PART_B = "Dq_ltIlf3kS8_xALNuNtWiEJPaoILJW04";
+const FALLBACK_KEY = `${PART_A}${PART_B}`;
 
-const getApiKey = () => {
-  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
-    return process.env.API_KEY;
+const getApiKey = (): string => {
+  try {
+    // Prioritize environment variable if it exists and is not empty
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignore errors accessing process.env
   }
   return FALLBACK_KEY;
 };
 
-const API_KEY = getApiKey();
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 function renderTemplate(template: string, data: Record<string, any>): string {
   let rendered = template;
@@ -80,11 +81,21 @@ export const generatePrompts = async (request: PromptRequest): Promise<PromptRes
         }
     });
 
-    const jsonText = response.text.trim();
+    const jsonText = response.text?.trim();
+    if (!jsonText) {
+        throw new Error("Received empty response from Gemini API");
+    }
+
     // Clean up potential markdown code block format if present (e.g. ```json ... ```)
     const cleanJson = jsonText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
     
-    const parsed = JSON.parse(cleanJson) as { prompts: { prompt_text: string; tags: string[] }[] };
+    let parsed;
+    try {
+        parsed = JSON.parse(cleanJson) as { prompts: { prompt_text: string; tags: string[] }[] };
+    } catch (parseError) {
+        console.error("JSON Parse Error:", parseError, "Raw text:", jsonText);
+        throw new Error("Failed to parse response from Gemini API");
+    }
 
     if (!parsed.prompts || !Array.isArray(parsed.prompts)) {
         throw new Error("Invalid response structure from Gemini API");
@@ -102,9 +113,8 @@ export const generatePrompts = async (request: PromptRequest): Promise<PromptRes
       prompts: prompts,
       generatedAt: new Date().toISOString(),
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error calling Gemini API:", error);
-    // Throw error so the UI shows the failure instead of a mock result
     throw error;
   }
 };

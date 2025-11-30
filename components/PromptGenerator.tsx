@@ -36,16 +36,23 @@ export const PromptGenerator: React.FC<PromptGeneratorProps> = ({ category }) =>
         const response = await generatePrompts(request);
         setGeneratedPrompts(response.prompts);
     } catch (err: any) {
-        // Extract a meaningful error message
+        // Provide clear feedback based on common API errors
         let errorMessage = 'Failed to generate prompts. Please try again.';
+        
         if (err instanceof Error) {
+            // Use the actual error message for debugging
             errorMessage = err.message;
-            if (errorMessage.includes("403") || errorMessage.includes("API key")) {
-                errorMessage = "API Key Error: Please check your API key configuration.";
-            } else if (errorMessage.includes("429")) {
-                errorMessage = "Quota Exceeded: Too many requests. Please try again later.";
+            
+            // Map common status codes to user-friendly messages
+            if (errorMessage.includes("429")) {
+                errorMessage = "Quota Exceeded: You have made too many requests. Please try again later.";
+            } else if (errorMessage.includes("503") || errorMessage.includes("Overloaded")) {
+                errorMessage = "Service Overloaded: The AI model is currently busy. Please try again in a moment.";
+            } else if (errorMessage.includes("400") && errorMessage.includes("API key")) {
+                errorMessage = "API Key Error: The API key provided is invalid.";
             }
         }
+        
         setError(errorMessage);
         console.error(err);
     } finally {
