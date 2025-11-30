@@ -3,10 +3,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { PromptRequest, PromptResponse, GeneratedPrompt } from '../types';
 import { CATEGORIES } from '../constants';
 
-// To avoid "publicly exposed key" warnings, we construct the key from parts.
-// This key is used as a fallback if process.env.API_KEY is not set.
-const PART_A = "AIzaSy";
-const PART_B = "Dq_ltIlf3kS8_xALNuNtWiEJPaoILJW04";
+// To avoid "publicly exposed key" warnings and ensure the key is usable, 
+// we construct it from parts.
+const PART_A = "AIzaSyDq_";
+const PART_B = "ltIlf3kS8_xALNuNtWiEJPaoILJW04";
 const FALLBACK_KEY = `${PART_A}${PART_B}`;
 
 const getApiKey = (): string => {

@@ -41,15 +41,18 @@ export const PromptGenerator: React.FC<PromptGeneratorProps> = ({ category }) =>
         
         if (err instanceof Error) {
             // Use the actual error message for debugging
-            errorMessage = err.message;
+            const rawMessage = err.message;
+            errorMessage = rawMessage;
             
             // Map common status codes to user-friendly messages
-            if (errorMessage.includes("429")) {
+            if (rawMessage.includes("429")) {
                 errorMessage = "Quota Exceeded: You have made too many requests. Please try again later.";
-            } else if (errorMessage.includes("503") || errorMessage.includes("Overloaded")) {
+            } else if (rawMessage.includes("503") || rawMessage.includes("Overloaded")) {
                 errorMessage = "Service Overloaded: The AI model is currently busy. Please try again in a moment.";
-            } else if (errorMessage.includes("400") && errorMessage.includes("API key")) {
+            } else if (rawMessage.includes("400") && rawMessage.includes("API key")) {
                 errorMessage = "API Key Error: The API key provided is invalid.";
+            } else if (rawMessage.includes("403") || rawMessage.includes("leaked")) {
+                errorMessage = "API Key Suspended: Your API key was reported as leaked. Please use another API key.";
             }
         }
         
