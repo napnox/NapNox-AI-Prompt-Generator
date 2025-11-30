@@ -8,6 +8,46 @@ interface PromptCardProps {
   index: number;
 }
 
+const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
+  // Split the text by the bold markdown syntax **...**
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+
+  return (
+    <div className="text-sm md:text-base text-gray-700 leading-relaxed">
+      {parts.map((part, i) => {
+        // Check if this part is a bold header (starts and ends with **)
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // Remove asterisks and trailing colon for the header title
+          const title = part.replace(/\*\*/g, '').replace(/:$/, '').trim();
+          return (
+            <h4 key={i} className="font-bold text-gray-900 mt-4 mb-1 text-base">
+              {title}
+            </h4>
+          );
+        }
+
+        // It's body text or separators
+        // Clean up common list separators like "- " or ": " that might precede/follow
+        let cleanText = part;
+        
+        // If it's just whitespace or a hyphen from a list item, we might want to skip or clean it
+        if (/^\s*-\s*$/.test(cleanText)) return null;
+
+        // Remove leading colon or hyphen if they were outside the bold tags
+        cleanText = cleanText.replace(/^[\s\-\:]+/, '').trim();
+
+        if (!cleanText) return null;
+
+        return (
+          <p key={i} className="mb-2">
+            {cleanText}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index }) => {
   const [isCopied, setIsCopied] = useState(false);
 
@@ -61,11 +101,17 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index }) => {
             </Tooltip>
         </div>
       </div>
-      <div className="relative">
-        <p className="text-gray-700 text-sm md:text-base whitespace-pre-wrap font-mono bg-gray-50 p-4 rounded-lg border border-gray-100">
-            {prompt.text}
-        </p>
+      
+      {/* 
+        Updated Container: 
+        - Removed font-mono to make it more "human readable" as requested.
+        - Added md:px-[100px] for the requested padding on larger screens.
+        - Kept px-6 for mobile to ensure content isn't squashed.
+      */}
+      <div className="relative bg-gray-50 rounded-lg border border-gray-100 px-6 py-8 md:px-[100px]">
+        <FormattedContent text={prompt.text} />
       </div>
+
       {prompt.metadata.tags && prompt.metadata.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
               {prompt.metadata.tags.map(tag => (
