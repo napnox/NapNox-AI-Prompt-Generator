@@ -35,8 +35,18 @@ export const PromptGenerator: React.FC<PromptGeneratorProps> = ({ category }) =>
     try {
         const response = await generatePrompts(request);
         setGeneratedPrompts(response.prompts);
-    } catch (err) {
-        setError('Failed to generate prompts. Please try again.');
+    } catch (err: any) {
+        // Extract a meaningful error message
+        let errorMessage = 'Failed to generate prompts. Please try again.';
+        if (err instanceof Error) {
+            errorMessage = err.message;
+            if (errorMessage.includes("403") || errorMessage.includes("API key")) {
+                errorMessage = "API Key Error: Please check your API key configuration.";
+            } else if (errorMessage.includes("429")) {
+                errorMessage = "Quota Exceeded: Too many requests. Please try again later.";
+            }
+        }
+        setError(errorMessage);
         console.error(err);
     } finally {
         setIsLoading(false);
