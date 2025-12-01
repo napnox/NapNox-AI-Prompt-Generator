@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { GeneratedPrompt } from '../types';
 import { PromptCard } from './PromptCard';
@@ -46,8 +47,8 @@ export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading
     // Increased height by 200px as requested: h-[calc(100vh+200px)]
     const containerClass = "relative h-[calc(100vh+200px)] sticky top-4 bg-gray-50/50 rounded-2xl border border-gray-200/80 shadow-inner overflow-hidden flex flex-col";
 
-    // Removed pt-[250px] so Variation #1 is close to the header
-    const scrollContainerClass = "flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pt-4 px-4 pb-20 scroll-smooth";
+    // Applied pt-[50px] for top spacing and pb-[50px] for bottom spacing as requested
+    const scrollContainerClass = "flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pt-[50px] px-4 pb-[50px] scroll-smooth";
 
     if (isLoading) {
         return (
