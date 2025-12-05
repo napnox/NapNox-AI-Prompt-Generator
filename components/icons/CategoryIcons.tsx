@@ -25,8 +25,8 @@ export const VideoIcon: React.FC<{ className?: string }> = ({ className }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M21.65,7.21a1,1,0,0,0-1,0L18,8.47V6a3,3,0,0,0-3-3H5A3,3,0,0,0,2,6V18a3,3,0,0,0,3,3H15a3,3,0,0,0,3-3V15.53l2.65,1.26a1,1,0,0,0,1,0,1,1,0,0,0,.35-.79V8A1,1,0,0,0,21.65,7.21ZM16,18a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V6A1,1,0,0,1,5,5H15a1,1,0,0,1,1,1Zm4-1.87-2-1V8.8l2-1Z"></path></svg>
 );
 
-export const MusicIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M19,2a1,1,0,0,0-1,1V14.26A4,4,0,1,0,20,18V3A1,1,0,0,0,19,2ZM8,14a3,3,0,1,1,3-3A3,3,0,0,1,8,14Z"></path></svg>
+export const PortraitIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
 );
 
 export const EducationIcon: React.FC<{ className?: string }> = ({ className }) => (

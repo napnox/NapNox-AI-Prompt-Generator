@@ -40,6 +40,10 @@ export interface PromptRequest {
   filters: Record<string, string | boolean | number>;
   platform: string;
   numVariations: number;
+  image?: {
+    base64: string;
+    mimeType: string;
+  };
 }
 
 export interface GeneratedPrompt {

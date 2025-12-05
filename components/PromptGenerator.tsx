@@ -77,6 +77,7 @@ export const PromptGenerator: React.FC<PromptGeneratorProps> = ({ category }) =>
                 prompts={generatedPrompts} 
                 isLoading={isLoading} 
                 error={error}
+                categoryId={category.id}
             />
         </div>
     </div>

@@ -1,57 +1,100 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import type { GeneratedPrompt } from '../types';
-import { CopyIcon, CheckIcon, InfoIcon } from './icons/ActionIcons';
+import { CopyIcon, CheckIcon } from './icons/ActionIcons';
 import { Tooltip } from './Tooltip';
 
 interface PromptCardProps {
   prompt: GeneratedPrompt;
   index: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  categoryId?: string;
 }
 
 const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
-  // Split the text by the bold markdown syntax **...**
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
 
   return (
-    <div className="text-sm md:text-base text-gray-700 leading-relaxed">
+    <div className="text-base text-gray-700 leading-relaxed font-sans px-[15px]">
       {parts.map((part, i) => {
-        // Check if this part is a bold header (starts and ends with **)
         if (part.startsWith('**') && part.endsWith('**')) {
-          // Remove asterisks and trailing colon for the header title
           const title = part.replace(/\*\*/g, '').replace(/:$/, '').trim();
           return (
-            <h4 key={i} className="font-bold text-gray-900 mt-4 mb-1 text-base">
+            <h4 key={i} className="font-bold text-gray-900 mt-5 mb-2 text-lg border-b border-gray-100 pb-1">
               {title}
             </h4>
           );
         }
-
-        // It's body text or separators
-        // Clean up common list separators like "- " or ": " that might precede/follow
-        let cleanText = part;
-        
-        // If it's just whitespace or a hyphen from a list item, we might want to skip or clean it
-        if (/^\s*-\s*$/.test(cleanText)) return null;
-
-        // Remove leading colon or hyphen if they were outside the bold tags
-        cleanText = cleanText.replace(/^[\s\-\:]+/, '').trim();
-
+        let cleanText = part.replace(/^[\s\-\:]+/, '').trim();
         if (!cleanText) return null;
-
-        return (
-          <p key={i} className="mb-2">
-            {cleanText}
-          </p>
-        );
+        return <p key={i} className="mb-4 whitespace-pre-line">{cleanText}</p>;
       })}
     </div>
   );
 };
 
-export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index }) => {
-  const [isCopied, setIsCopied] = useState(false);
+// Helper to generate consistent colorful tags
+const getTagColor = (tag: string) => {
+    const colors = [
+        'bg-red-100 text-red-700 border-red-200',
+        'bg-orange-100 text-orange-700 border-orange-200',
+        'bg-amber-100 text-amber-700 border-amber-200',
+        'bg-green-100 text-green-700 border-green-200',
+        'bg-emerald-100 text-emerald-700 border-emerald-200',
+        'bg-teal-100 text-teal-700 border-teal-200',
+        'bg-cyan-100 text-cyan-700 border-cyan-200',
+        'bg-sky-100 text-sky-700 border-sky-200',
+        'bg-blue-100 text-blue-700 border-blue-200',
+        'bg-indigo-100 text-indigo-700 border-indigo-200',
+        'bg-violet-100 text-violet-700 border-violet-200',
+        'bg-purple-100 text-purple-700 border-purple-200',
+        'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200',
+        'bg-pink-100 text-pink-700 border-pink-200',
+        'bg-rose-100 text-rose-700 border-rose-200',
+    ];
+    let hash = 0;
+    for (let i = 0; i < tag.length; i++) {
+        hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+};
 
-  const handleCopy = async () => {
+export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index, isOpen, onToggle, categoryId }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const [heading, setHeading] = useState(`Prompt ${index + 1}`);
+
+  useEffect(() => {
+    // Attempt to extract a short summary heading from the content
+    const extractHeading = () => {
+        // Look for Concept or Subject lines
+        const match = prompt.text.match(/(?:\*\*Concept:\*\*|Concept:|Subject:|Summary:)\s*(.*?)(\.|\n|$)/i);
+        if (match && match[1]) {
+            let summary = match[1].trim();
+            
+            // Clean up repetitive prefixes like "Portrait 1 / Variation 1 - "
+            // Regex removes: "Word # / Word # -" patterns or just "Variation # -"
+            summary = summary.replace(/^((?:Portrait|Prompt|Variation)\s*\d+\s*[\/\-]\s*)+/i, '');
+            summary = summary.replace(/^(?:Variation\s*\d+\s*-\s*)/i, '');
+            summary = summary.replace(/^\s*-\s*/, ''); // Remove leading dash if left
+
+            if (summary.length > 80) summary = summary.substring(0, 80) + "...";
+            return summary;
+        }
+        
+        // Fallback checks
+        if (prompt.metadata.tags && prompt.metadata.tags.length > 0) {
+             return `${prompt.metadata.tags[0]} Variation`;
+        }
+
+        return `Generated Result`;
+    };
+    setHeading(extractHeading());
+  }, [prompt, index]);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent toggling accordion
     try {
       await navigator.clipboard.writeText(prompt.text);
       setIsCopied(true);
@@ -62,63 +105,71 @@ export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index }) => {
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-lg border border-gray-200/80 transform transition-transform hover:scale-[1.02] hover:shadow-2xl group">
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2">
-           <h4 className="text-sm font-bold text-gray-800">Variation #{index + 1}</h4>
-           <Tooltip content="This is a generated prompt tailored to your inputs.">
-              <div className="text-gray-400 hover:text-gray-600 cursor-help">
-                <InfoIcon className="h-4 w-4" />
-              </div>
-           </Tooltip>
+    <div className={`border rounded-lg overflow-hidden transition-all duration-300 ${isOpen ? 'border-emerald-400 shadow-md ring-1 ring-emerald-100' : 'border-gray-200 shadow-sm bg-white'}`}>
+      {/* Tab Header - Click to open */}
+      <div 
+        onClick={onToggle}
+        className={`px-4 py-4 flex justify-between items-center cursor-pointer select-none transition-colors duration-300 gap-4
+            ${isOpen 
+                ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
+                : 'bg-white hover:bg-gray-50 text-gray-800'
+            }`}
+      >
+        <div className="flex items-center gap-3 w-full">
+            {/* Arrow Icon */}
+            <div className={`transform transition-transform duration-300 flex-shrink-0 ${isOpen ? 'rotate-90 text-white' : 'text-gray-400'}`}>
+                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </div>
+            
+            {/* Title Section */}
+            <div className="flex-1">
+                <h4 className={`text-lg md:text-xl font-semibold leading-tight whitespace-normal break-words ${isOpen ? 'text-white' : 'text-gray-900'}`}>
+                    Prompt {index + 1} - {heading}
+                </h4>
+            </div>
         </div>
-        <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                Ready to use
-            </span>
-            <Tooltip content={isCopied ? "Copied!" : "Copy this prompt to clipboard"}>
+        
+        <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Show Copy Button in Header for quick access */}
+            <Tooltip content={isCopied ? "Copied!" : "Copy prompt"}>
                 <button
                 onClick={handleCopy}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 border ${
-                    isCopied 
-                    ? 'bg-green-50 text-green-700 border-green-200' 
-                    : 'bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 border-gray-200 hover:border-blue-200'
+                className={`p-2 rounded-lg transition-all duration-200 backdrop-blur-sm ${
+                    isOpen
+                        ? 'text-white bg-white/20 hover:bg-white/30'
+                        : isCopied 
+                            ? 'text-green-600 bg-green-50' 
+                            : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
                 }`}
-                aria-label="Copy prompt"
                 >
-                {isCopied ? (
-                    <>
-                    <CheckIcon className="h-4 w-4" />
-                    <span>Copied</span>
-                    </>
-                ) : (
-                    <>
-                    <CopyIcon className="h-4 w-4" />
-                    <span>Copy</span>
-                    </>
-                )}
+                {isCopied ? <CheckIcon className="h-5 w-5" /> : <CopyIcon className="h-5 w-5" />}
                 </button>
             </Tooltip>
         </div>
       </div>
-      
-      {/* 
-        Updated Container: 
-        - Removed font-mono to make it more "human readable" as requested.
-        - Added md:px-[100px] for the requested padding on larger screens.
-        - Kept px-6 for mobile to ensure content isn't squashed.
-      */}
-      <div className="relative bg-gray-50 rounded-lg border border-gray-100 px-6 py-8 md:px-[100px]">
-        <FormattedContent text={prompt.text} />
-      </div>
 
-      {prompt.metadata.tags && prompt.metadata.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-              {prompt.metadata.tags.map(tag => (
-                  <span key={tag} className="px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100/80 rounded-md cursor-default" title={`Tag: ${tag}`}>
-                      {tag}
-                  </span>
-              ))}
+      {/* Tab Content - Collapsible */}
+      {isOpen && (
+          <div className="bg-white animate-fade-in-up">
+             <div className="p-4 md:p-6">
+                <FormattedContent text={prompt.text} />
+                
+                {/* Colorful Tags */}
+                {prompt.metadata.tags && prompt.metadata.tags.length > 0 && (
+                <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-gray-100 px-[15px]">
+                    {prompt.metadata.tags.map(tag => (
+                        <span 
+                            key={tag} 
+                            className={`px-3 py-1 text-xs font-bold rounded-full border shadow-sm ${getTagColor(tag)}`}
+                        >
+                            #{tag}
+                        </span>
+                    ))}
+                </div>
+                )}
+             </div>
           </div>
       )}
     </div>

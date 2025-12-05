@@ -1,6 +1,6 @@
 
-import React from 'react';
-import type { GeneratedPrompt } from '../types';
+import React, { useState } from 'react';
+import type { GeneratedPrompt, CategoryID } from '../types';
 import { PromptCard } from './PromptCard';
 import { SparkleIcon, DownloadIcon } from './icons/ActionIcons';
 import { Tooltip } from './Tooltip';
@@ -9,6 +9,7 @@ interface PromptResultsProps {
   prompts: GeneratedPrompt[];
   isLoading: boolean;
   error: string | null;
+  categoryId?: CategoryID;
 }
 
 const SkeletonCard: React.FC = () => (
@@ -26,7 +27,17 @@ const SkeletonCard: React.FC = () => (
     </div>
 );
 
-export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading, error }) => {
+export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading, error, categoryId }) => {
+    // Accordion state: keep track of which prompt ID is open
+    // Default to the first prompt being open if results exist
+    const [openPromptId, setOpenPromptId] = useState<string | null>(null);
+
+    // Open first prompt automatically when prompts are loaded
+    React.useEffect(() => {
+        if (prompts.length > 0) {
+            setOpenPromptId(prompts[0].id);
+        }
+    }, [prompts]);
 
     const handleDownload = () => {
         if (prompts.length === 0) return;
@@ -43,12 +54,15 @@ export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading
         URL.revokeObjectURL(url);
     };
 
+    const toggleAccordion = (id: string) => {
+        setOpenPromptId(prev => prev === id ? null : id);
+    };
+
     // Container style that defines the fixed window for scrolling
-    // Increased height by 200px as requested: h-[calc(100vh+200px)]
     const containerClass = "relative h-[calc(100vh+200px)] sticky top-4 bg-gray-50/50 rounded-2xl border border-gray-200/80 shadow-inner overflow-hidden flex flex-col";
 
-    // Applied pt-[50px] for top spacing and pb-[50px] for bottom spacing as requested
-    const scrollContainerClass = "flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pt-[50px] px-4 pb-[50px] scroll-smooth";
+    // Content container - padding adjustments
+    const scrollContainerClass = "flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-4 pb-[50px] scroll-smooth";
 
     if (isLoading) {
         return (
@@ -56,7 +70,7 @@ export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading
                  <div className="absolute top-0 left-0 right-0 z-20 bg-white/90 backdrop-blur-sm p-4 border-b border-gray-200">
                     <h3 className="text-xl font-semibold text-gray-800">Generating...</h3>
                 </div>
-                <div className={scrollContainerClass}>
+                <div className={`${scrollContainerClass} pt-[100px]`}>
                     <div className="space-y-4">
                         {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
                     </div>
@@ -123,8 +137,18 @@ export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading
 
                 {/* Scrollable Content */}
                 <div className={scrollContainerClass}>
-                    <div className="space-y-6">
-                        {prompts.map((prompt, index) => <PromptCard key={prompt.id} prompt={prompt} index={index} />)}
+                    <div className="flex flex-col">
+                        {prompts.map((prompt, index) => (
+                            <div key={prompt.id} className={index === 0 ? "mt-[100px]" : "mt-[5px]"}>
+                                <PromptCard 
+                                    prompt={prompt} 
+                                    index={index} 
+                                    isOpen={openPromptId === prompt.id}
+                                    onToggle={() => toggleAccordion(prompt.id)}
+                                    categoryId={categoryId}
+                                />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

@@ -24,6 +24,21 @@ const TextAreaInput: React.FC<{label: string, id: string, value: string, onChang
     </div>
 );
 
+const FileInput: React.FC<{label: string, id: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void}> = ({ label, id, onChange }) => (
+    <div>
+        <label htmlFor={id} className="block text-sm font-semibold text-gray-700 mb-1.5">{label}</label>
+        <input 
+            type="file" 
+            id={id} 
+            name={id} 
+            accept="image/*"
+            onChange={onChange} 
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition duration-150 ease-in-out bg-white text-gray-900" 
+        />
+        <p className="mt-1 text-xs text-gray-500">Max size 4MB. Supports JPG, PNG.</p>
+    </div>
+);
+
 export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, isLoading }) => {
     const initialFormState = useMemo(() => {
         const state: Record<string, any> = {
@@ -32,24 +47,54 @@ export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, is
             platform: category.platform.options[0]?.value || '',
         };
         category.filters.forEach(filter => {
-            state[filter.id] = filter.options ? filter.options[0].value : (filter.defaultValue ?? '');
+            if (filter.type !== 'file') {
+                state[filter.id] = filter.options ? filter.options[0].value : (filter.defaultValue ?? '');
+            }
         });
         return state;
     }, [category]);
     
     const [formState, setFormState] = useState(initialFormState);
+    const [selectedFile, setSelectedFile] = useState<{base64: string, mimeType: string} | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
+        
+        if (type === 'file') {
+            const fileInput = e.target as HTMLInputElement;
+            const file = fileInput.files?.[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64String = reader.result as string;
+                    // Extract base64 data and mime type
+                    const matches = base64String.match(/^data:(.+);base64,(.+)$/);
+                    if (matches) {
+                         setSelectedFile({
+                             mimeType: matches[1],
+                             base64: matches[2]
+                         });
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                setSelectedFile(null);
+            }
+            return;
+        }
+
         const isCheckbox = type === 'checkbox';
         const checked = (e.target as HTMLInputElement).checked;
-
         setFormState(prev => ({ ...prev, [name]: isCheckbox ? checked : value }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onGenerate(formState);
+        const finalState = { ...formState };
+        if (selectedFile) {
+            finalState.image = selectedFile;
+        }
+        onGenerate(finalState);
     };
 
     return (
@@ -58,7 +103,7 @@ export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, is
             <p className="text-sm text-gray-500 mb-6">{category.description}</p>
             
             <form onSubmit={handleSubmit} className="space-y-5">
-                <TextAreaInput label="Your Core Idea" id="inputText" value={formState.inputText} onChange={handleChange} placeholder={`e.g., A futuristic cityscape at sunset for ${category.name}`} />
+                <TextAreaInput label={category.id === 'portrait_transformer' ? "Describe Yourself (e.g. eye color, hair)" : "Your Core Idea"} id="inputText" value={formState.inputText} onChange={handleChange} placeholder={`e.g., A futuristic cityscape at sunset for ${category.name}`} />
 
                 <SelectInput label="Subtype" id="subtype" value={formState.subtype} onChange={handleChange} options={category.subtypes.map(s => ({ value: s, label: s }))} />
 
@@ -73,6 +118,9 @@ export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, is
                     }
                     if (filter.type === 'textarea') {
                         return <TextAreaInput key={filter.id} label={filter.label} id={filter.id} value={formState[filter.id]} onChange={handleChange} placeholder={filter.placeholder} rows={rows} />;
+                    }
+                    if (filter.type === 'file') {
+                        return <FileInput key={filter.id} label={filter.label} id={filter.id} onChange={handleChange} />;
                     }
                     return null;
                 })}

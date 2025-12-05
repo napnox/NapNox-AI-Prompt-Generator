@@ -1,3 +1,4 @@
+
 import type { Category } from './types';
 import {
   ImageIcon,
@@ -6,7 +7,7 @@ import {
   VideoIcon,
   ChatIcon,
   BusinessIcon,
-  MusicIcon,
+  PortraitIcon,
   EducationIcon,
   ProductivityIcon,
   SeoIcon,
@@ -18,12 +19,12 @@ import {
 
 export const PREDEFINED_CATEGORIES = {
   IMAGE: 'image',
+  PORTRAIT_TRANSFORMER: 'portrait_transformer',
   WRITING: 'writing',
   CODE: 'code',
   CHAT: 'chat',
   BUSINESS: 'business',
   VIDEO: 'video',
-  MUSIC: 'music',
   EDUCATION: 'education',
   PRODUCTIVITY: 'productivity',
   SEO: 'seo',
@@ -92,6 +93,87 @@ For each variation, create a complete prompt with these sections:
 - **Negative Prompt (optional):** Mention things to avoid, like "{{negativeKeywords}}".
 
 Finally, provide 5 relevant, SEO-friendly tags for the generated image.`,
+  },
+  {
+    id: PREDEFINED_CATEGORIES.PORTRAIT_TRANSFORMER,
+    name: 'Portrait Transformer',
+    description: 'Upload a photo and generate prompts to transform into a specific persona.',
+    icon: PortraitIcon,
+    subtypes: ['Standard Transformation'], 
+    filters: [
+      { id: 'userImage', label: 'Upload Your Photo (Optional)', type: 'file' },
+      { id: 'persona', label: 'Persona / Role', type: 'select', options: [
+        { value: 'Business Professional', label: 'Business Professional' },
+        { value: 'CEO / Founder', label: 'CEO / Founder' },
+        { value: 'Corporate Portrait', label: 'Corporate Portrait' },
+        { value: 'University Student', label: 'University Student' },
+        { value: 'Professor / Educator', label: 'Professor / Educator' },
+        { value: 'Creative Designer', label: 'Creative Designer' },
+        { value: 'Cinematic Hero', label: 'Cinematic Hero' },
+        { value: 'Cyberpunk Character', label: 'Cyberpunk Character' },
+        { value: 'Fantasy Warrior', label: 'Fantasy Warrior' },
+        { value: 'Tech Influencer', label: 'Tech Influencer' },
+        { value: 'Model / Fashion Editorial', label: 'Model / Fashion Editorial' },
+        { value: 'Gamer / Streamer', label: 'Gamer / Streamer' },
+        { value: 'Medical Professional', label: 'Medical Professional' },
+        { value: 'Engineer / Architect', label: 'Engineer / Architect' },
+      ]},
+      { id: 'style', label: 'Style', type: 'select', options: [
+        { value: 'Photorealistic', label: 'Photorealistic' },
+        { value: 'Cinematic', label: 'Cinematic' },
+        { value: 'Magazine Editorial', label: 'Magazine Editorial' },
+        { value: 'Minimalist Clean', label: 'Minimalist Clean' },
+        { value: 'High-Contrast Dramatic', label: 'High-Contrast Dramatic' },
+        { value: 'Soft Natural Light', label: 'Soft Natural Light' },
+        { value: 'Cyberpunk Neon', label: 'Cyberpunk Neon' },
+        { value: 'Vintage Film', label: 'Vintage Film' },
+        { value: 'Futuristic Sci-Fi', label: 'Futuristic Sci-Fi' },
+        { value: 'Pixar / Stylized', label: 'Pixar / Stylized' },
+      ]},
+      { id: 'background', label: 'Background', type: 'select', options: [
+        { value: 'Corporate Office', label: 'Corporate Office' },
+        { value: 'Dark Cinematic Studio', label: 'Dark Cinematic Studio' },
+        { value: 'Clean White Backdrop', label: 'Clean White Backdrop' },
+        { value: 'University Library', label: 'University Library' },
+        { value: 'Urban Cityscape', label: 'Urban Cityscape' },
+        { value: 'Futuristic Tech Lab', label: 'Futuristic Tech Lab' },
+        { value: 'Neon Alley', label: 'Neon Alley' },
+        { value: 'Cozy Indoor Room', label: 'Cozy Indoor Room' },
+        { value: 'Nature / Park', label: 'Nature / Park' },
+      ]},
+      { id: 'quality', label: 'Quality / Enhancements', type: 'select', options: [
+        { value: 'Professional Studio Lighting', label: 'Professional Studio Lighting' },
+        { value: 'Skin Retouching (Subtle)', label: 'Skin Retouching (Subtle)' },
+        { value: 'High Dynamic Range', label: 'High Dynamic Range' },
+        { value: 'Shallow Depth of Field', label: 'Shallow Depth of Field' },
+        { value: 'Ultra-Sharp Details', label: 'Ultra-Sharp Details' },
+      ]},
+    ],
+    platform: {
+      id: 'platform',
+      label: 'Target Image Model',
+      options: [
+        { value: 'Gemini Imagen', label: 'Gemini Imagen' },
+        { value: 'Midjourney v6', label: 'Midjourney v6' },
+        { value: 'Stable Diffusion XL', label: 'Stable Diffusion XL' },
+        { value: 'Leonardo Phoenix', label: 'Leonardo Phoenix' },
+      ],
+    },
+    template: `Analyze the user's uploaded photo (if provided) to understand their facial structure and key features. As an expert photographer and prompt engineer for {{platform}}, generate {{numVariations}} high-quality image generation prompts that transform the subject into the following persona while preserving their identity (if an image was provided).
+
+**Core Idea/Input:** "{{inputText}}"
+**Target Persona:** {{persona}}
+**Art Style:** {{style}}
+**Setting/Background:** {{background}}
+**Enhancements:** {{quality}}
+
+For each variation, create a complete prompt with these sections:
+- **Concept:** A one-line summary. Example: "Portrait 1 / Variation 1 - {{persona}} in {{background}}".
+- **Subject Description:** Detailed instructions to generate a {{persona}} with the user's features (if referenced) or generic high-quality features. Describe clothing, pose, and expression suitable for a {{persona}}.
+- **Environment:** Describe the {{background}} in detail.
+- **Style & Technicals:** apply the {{style}} aesthetic. Include lighting ({{quality}}), camera angle, and film look.
+
+Finally, provide 5 relevant tags.`,
   },
   {
     id: PREDEFINED_CATEGORIES.WRITING,
@@ -303,62 +385,6 @@ For each variation, create a complete prompt with these sections:
 - **Formatting Instructions:** Guidelines on tone of voice, length, and presentation style.
 
 Finally, provide 5 relevant business tags.`,
-  },
-  {
-    id: PREDEFINED_CATEGORIES.MUSIC,
-    name: 'Music',
-    description: 'Generate prompts for song composition and audio creation.',
-    icon: MusicIcon,
-    subtypes: ['Song Composition', 'Ambient Track', 'Voiceover Script', 'Sound Effect', 'Film Score', 'Podcast Intro/Outro', 'Ad Jingle'],
-    filters: [
-      { id: 'genre', label: 'Genre', type: 'select', options: [
-          { value: 'electronic', label: 'Electronic' }, 
-          { value: 'orchestral', label: 'Orchestral' }, 
-          { value: 'lo-fi', label: 'Lo-fi' }, 
-          { value: 'rock', label: 'Rock' },
-          { value: 'hip hop', label: 'Hip Hop' },
-          { value: 'jazz', label: 'Jazz' },
-          { value: 'cinematic', label: 'Cinematic' },
-          { value: 'synthwave', label: 'Synthwave' },
-      ]},
-      { id: 'mood', label: 'Mood', type: 'select', options: [
-          { value: 'uplifting', label: 'Uplifting' }, 
-          { value: 'melancholic', label: 'Melancholic' }, 
-          { value: 'tense', label: 'Tense' },
-          { value: 'epic', label: 'Epic' },
-          { value: 'relaxing', label: 'Relaxing' },
-          { value: 'suspenseful', label: 'Suspenseful' },
-          { value: 'driving', label: 'Driving' },
-      ]},
-      { id: 'tempo', label: 'Tempo', type: 'textarea', placeholder: 'e.g., 120 BPM, slow, fast' },
-    ],
-    platform: {
-      id: 'platform',
-      label: 'Target AI',
-      options: [
-          { value: 'Suno', label: 'Suno' }, 
-          { value: 'Udio', label: 'Udio' }, 
-          { value: 'ElevenLabs', label: 'ElevenLabs' },
-          { value: 'AIVA', label: 'AIVA' },
-          { value: 'Soundraw', label: 'Soundraw' },
-      ],
-    },
-    template: `As a music producer, generate {{numVariations}} detailed prompts for an AI music generator like {{platform}}.
-
-**Core Idea:** "{{inputText}}"
-**Type:** {{subtype}}
-**Genre:** {{genre}}
-**Mood:** {{mood}}
-**Tempo:** {{tempo}}
-
-For each variation, create a complete prompt with these sections:
-- **Concept:** A one-sentence artistic vision for the audio piece.
-- **Musical Structure:** A description of the composition's structure (e.g., intro, verse, chorus, bridge, outro).
-- **Instrumentation:** A list of key instruments to be featured (e.g., synth pads, acoustic guitar, heavy drums).
-- **Melody & Harmony:** Guidance on the melodic style and harmonic complexity.
-- **Production Notes:** Details on production style (e.g., clean, distorted, atmospheric).
-
-Finally, provide 5 relevant tags for the music track.`,
   },
   {
     id: PREDEFINED_CATEGORIES.EDUCATION,

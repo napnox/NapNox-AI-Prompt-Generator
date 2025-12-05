@@ -51,9 +51,26 @@ export const generatePrompts = async (request: PromptRequest): Promise<PromptRes
   const composedPrompt = renderTemplate(category.template, templateData);
 
   try {
+    let contents: any = composedPrompt;
+
+    // Handle Image Multimodal Input
+    if (request.image) {
+        contents = {
+            parts: [
+                { text: composedPrompt },
+                {
+                    inlineData: {
+                        mimeType: request.image.mimeType,
+                        data: request.image.base64
+                    }
+                }
+            ]
+        };
+    }
+
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
-        contents: composedPrompt,
+        contents: contents,
         config: {
             responseMimeType: "application/json",
             responseSchema: {
