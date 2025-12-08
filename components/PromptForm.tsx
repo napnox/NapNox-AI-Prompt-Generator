@@ -6,6 +6,8 @@ interface PromptFormProps {
   category: Category;
   onGenerate: (formState: Record<string, any>) => void;
   isLoading: boolean;
+  usageCount: number;
+  maxUsage: number;
 }
 
 const SelectInput: React.FC<{label: string, id: string, value: string, onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void, options: {value: string, label: string}[]}> = ({ label, id, value, onChange, options }) => (
@@ -39,7 +41,7 @@ const FileInput: React.FC<{label: string, id: string, onChange: (e: React.Change
     </div>
 );
 
-export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, isLoading }) => {
+export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, isLoading, usageCount, maxUsage }) => {
     const initialFormState = useMemo(() => {
         const state: Record<string, any> = {
             inputText: '',
@@ -56,6 +58,8 @@ export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, is
     
     const [formState, setFormState] = useState(initialFormState);
     const [selectedFile, setSelectedFile] = useState<{base64: string, mimeType: string} | null>(null);
+
+    const isLimitReached = usageCount >= maxUsage;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -125,22 +129,47 @@ export const PromptForm: React.FC<PromptFormProps> = ({ category, onGenerate, is
                     return null;
                 })}
 
-                <button type="submit" disabled={isLoading || !formState.inputText.trim()} className="w-full flex justify-center items-center gap-2 px-4 py-3 border border-transparent text-base font-semibold rounded-lg text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out transform hover:scale-105 shadow-md hover:shadow-lg">
-                    {isLoading ? (
-                        <>
-                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span>Generating...</span>
-                        </>
-                    ) : (
-                        <>
-                            <SparkleIcon className="h-5 w-5" />
-                            <span>Generate Prompts</span>
-                        </>
-                    )}
-                </button>
+                <div className="pt-2">
+                    <button 
+                        type="submit" 
+                        disabled={isLoading || !formState.inputText.trim() || isLimitReached} 
+                        className={`w-full flex justify-center items-center gap-2 px-4 py-3 border border-transparent text-base font-semibold rounded-lg text-white transition-all duration-200 ease-in-out transform shadow-md hover:shadow-lg
+                            ${isLimitReached 
+                                ? 'bg-gray-400 cursor-not-allowed' 
+                                : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 hover:scale-105'
+                            }
+                            ${isLoading ? 'opacity-80 cursor-wait' : ''}
+                        `}
+                    >
+                        {isLoading ? (
+                            <>
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span>Generating...</span>
+                            </>
+                        ) : isLimitReached ? (
+                            <span>Limit Reached</span>
+                        ) : (
+                            <>
+                                <SparkleIcon className="h-5 w-5" />
+                                <span>Generate Prompts</span>
+                            </>
+                        )}
+                    </button>
+                    {/* Usage Counter */}
+                    <div className="mt-3 flex items-center justify-between text-xs font-medium text-gray-500">
+                        <span>Free Plan</span>
+                        <span>{Math.min(usageCount, maxUsage)} / {maxUsage} generations used</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1 overflow-hidden">
+                        <div 
+                            className={`h-1.5 rounded-full transition-all duration-500 ${isLimitReached ? 'bg-red-500' : 'bg-green-500'}`} 
+                            style={{ width: `${Math.min((usageCount / maxUsage) * 100, 100)}%` }}
+                        ></div>
+                    </div>
+                </div>
             </form>
         </div>
     );

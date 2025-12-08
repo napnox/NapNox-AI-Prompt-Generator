@@ -1,5 +1,5 @@
 {
   "name": "NapNox AI Prompt Generator",
-  "description": "An all-in-one prompt generator for 14 categories including Image, Writing, Code, and more. Select a category, provide an idea, and get high-quality prompts for models like Midjourney, ChatGPT, and Gemini.",
+  "description": "Generate professional prompts for Image, Writing, Code, and the new AI Portrait Transformer. Select a category, customize filters, and get instant results for Gemini, Midjourney, and ChatGPT.",
   "requestFramePermissions": []
 }
