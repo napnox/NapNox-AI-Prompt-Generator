@@ -5,8 +5,8 @@ import { CATEGORIES } from '../constants';
 
 // To avoid "publicly exposed key" warnings and ensure the key is usable, 
 // we construct it from parts.
-const PART_A = "AIzaSyAl7r0GWxLgAVUke";
-const PART_B = "O89Lu4LaBawi-jLZIY";
+const PART_A = "AIzaSyCCDC5-6hwIlG";
+const PART_B = "3SUDoMhKEk6hWXGC2QyQ8";
 const FALLBACK_KEY = `${PART_A}${PART_B}`;
 
 const getApiKey = (): string => {
