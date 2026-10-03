@@ -9,7 +9,6 @@ interface PromptCardProps {
   index: number;
   isOpen: boolean;
   onToggle: () => void;
-  categoryId?: string;
 }
 
 const FormattedContent: React.FC<{ text: string }> = ({ text }) => {
@@ -61,7 +60,7 @@ const getTagColor = (tag: string) => {
     return colors[index];
 };
 
-export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index, isOpen, onToggle, categoryId }) => {
+export const PromptCard: React.FC<PromptCardProps> = ({ prompt, index, isOpen, onToggle }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [heading, setHeading] = useState(`Prompt ${index + 1}`);
 

@@ -28,3 +28,11 @@ dist-ssr
 .env.local
 .env.*.local
 !.env.example
+
+# Local dev quota store (stands in for WordPress user meta)
+.napnox-dev-users.json
+
+# WordPress plugin build output
+wordpress-plugin/dist/
+wordpress-plugin/napnox-prompt-generator/assets/
+wordpress-plugin/napnox-prompt-generator/shared/

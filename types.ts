@@ -1,42 +1,10 @@
-import type { PREDEFINED_CATEGORIES } from './constants';
-
-export type CategoryID = (typeof PREDEFINED_CATEGORIES)[keyof typeof PREDEFINED_CATEGORIES];
-
-export interface FilterOption {
-  value: string;
-  label: string;
-}
-
-export interface Filter {
-  id: string;
-  label: string;
-  type: 'select' | 'toggle' | 'textarea' | 'file';
-  options?: FilterOption[];
-  placeholder?: string;
-  defaultValue?: string | boolean;
-}
-
-export interface Category {
-  id: CategoryID;
-  name: string;
-  description: string;
-  subtypes: string[];
-  filters: Filter[];
-  platform: {
-    id: string;
-    label: string;
-    options: FilterOption[];
-  };
-  template: string;
-}
-
-export interface PromptRequest {
-  category: CategoryID;
-  subtype: string;
-  inputText: string;
-  filters: Record<string, string | boolean | number>;
+export interface GenerateRequest {
+  idea: string;
+  promptType: string;
   platform: string;
+  detail: string;
   numVariations: number;
+  context?: string;
   image?: {
     base64: string;
     mimeType: string;
@@ -51,9 +19,37 @@ export interface GeneratedPrompt {
   };
 }
 
-export interface PromptResponse {
+/** Quota snapshot returned by both the session and generate endpoints. */
+export interface Usage {
+  used: number;
+  limit: number;
+  remaining: number;
+  unlimited: boolean;
+}
+
+export interface Session {
+  loggedIn: boolean;
+  user: { name: string; email?: string; avatar?: string } | null;
+  usage: Usage | null;
+  loginUrl: string;
+  registerUrl: string;
+  contact: {
+    email: string;
+    whatsapp: string;
+    message: string;
+  };
+  /** Set when the backend is misconfigured (e.g. no API key saved yet). */
+  notice?: string;
+}
+
+export interface GenerateResponse {
   requestId: string;
-  category: string;
-  prompts: GeneratedPrompt[];
   generatedAt: string;
+  prompts: GeneratedPrompt[];
+  usage: Usage;
+}
+
+export interface ApiError extends Error {
+  status: number;
+  code: string;
 }

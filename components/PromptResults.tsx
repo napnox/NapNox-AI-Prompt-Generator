@@ -1,157 +1,159 @@
-
-import React, { useState } from 'react';
-import type { GeneratedPrompt, CategoryID } from '../types';
+import React, { useEffect, useState } from 'react';
+import type { GeneratedPrompt } from '../types';
+import { CheckIcon, CopyIcon, DownloadIcon, SparkleIcon } from './icons/ActionIcons';
 import { PromptCard } from './PromptCard';
-import { SparkleIcon, DownloadIcon } from './icons/ActionIcons';
 import { Tooltip } from './Tooltip';
 
 interface PromptResultsProps {
   prompts: GeneratedPrompt[];
   isLoading: boolean;
   error: string | null;
-  categoryId?: CategoryID;
 }
 
 const SkeletonCard: React.FC = () => (
-    <div className="bg-white p-5 rounded-xl shadow-md border border-gray-200">
-        <div className="animate-pulse flex space-x-4">
-            <div className="flex-1 space-y-4 py-1">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                </div>
-                 <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </div>
-        </div>
+  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+    <div className="animate-pulse space-y-4">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="space-y-2">
+        <div className="h-4 bg-gray-200 rounded" />
+        <div className="h-4 bg-gray-200 rounded w-5/6" />
+      </div>
+      <div className="h-4 bg-gray-200 rounded w-1/2" />
     </div>
+  </div>
 );
 
-export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading, error, categoryId }) => {
-    // Accordion state: keep track of which prompt ID is open
-    // Default to the first prompt being open if results exist
-    const [openPromptId, setOpenPromptId] = useState<string | null>(null);
+const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="lg:sticky lg:top-4">{children}</div>
+);
 
-    // Open first prompt automatically when prompts are loaded
-    React.useEffect(() => {
-        if (prompts.length > 0) {
-            setOpenPromptId(prompts[0].id);
-        }
-    }, [prompts]);
+export const PromptResults: React.FC<PromptResultsProps> = ({ prompts, isLoading, error }) => {
+  const [openPromptId, setOpenPromptId] = useState<string | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
 
-    const handleDownload = () => {
-        if (prompts.length === 0) return;
+  useEffect(() => {
+    setOpenPromptId(prompts.length > 0 ? prompts[0].id : null);
+  }, [prompts]);
 
-        const jsonString = JSON.stringify(prompts, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'napnox-prompts.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    };
+  const handleDownload = () => {
+    if (prompts.length === 0) return;
+    const text = prompts.map((p, i) => `--- Prompt ${i + 1} ---\n\n${p.text}\n`).join('\n');
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'napnox-prompts.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
-    const toggleAccordion = (id: string) => {
-        setOpenPromptId(prev => prev === id ? null : id);
-    };
-
-    // Container style that defines the fixed window for scrolling
-    const containerClass = "relative h-[calc(100vh+200px)] sticky top-4 bg-gray-50/50 rounded-2xl border border-gray-200/80 shadow-inner overflow-hidden flex flex-col";
-
-    // Content container - padding adjustments
-    const scrollContainerClass = "flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar px-4 pb-[50px] scroll-smooth";
-
-    if (isLoading) {
-        return (
-            <div className={containerClass}>
-                 <div className="absolute top-0 left-0 right-0 z-20 bg-white/90 backdrop-blur-sm p-4 border-b border-gray-200">
-                    <h3 className="text-xl font-semibold text-gray-800">Generating...</h3>
-                </div>
-                <div className={`${scrollContainerClass} pt-[100px]`}>
-                    <div className="space-y-4">
-                        {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
-                    </div>
-                </div>
-            </div>
-        );
+  const handleCopyAll = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        prompts.map((p, i) => `--- Prompt ${i + 1} ---\n\n${p.text}`).join('\n\n'),
+      );
+      setCopiedAll(true);
+      setTimeout(() => setCopiedAll(false), 2000);
+    } catch {
+      // Clipboard unavailable (insecure context); the download button still works.
     }
+  };
 
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[600px] bg-red-50 border border-red-200 rounded-2xl p-8 text-center sticky top-4">
-                <h3 className="text-xl font-semibold text-red-800 mb-2">An Error Occurred</h3>
-                <p className="text-red-600 max-w-md">{error}</p>
-            </div>
-        );
-    }
-    
-    if (prompts.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center h-[600px] bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center sticky top-4">
-                <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-full mb-4">
-                   <SparkleIcon className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-800">Your Prompts Will Appear Here</h3>
-                <p className="text-gray-500 max-w-sm mt-2">Fill out the form on the left and click "Generate" to see the magic happen!</p>
-            </div>
-        );
-    }
-
+  if (isLoading) {
     return (
-        <>
-            <style>
-                {`
-                    .custom-scrollbar::-webkit-scrollbar {
-                        width: 6px;
-                    }
-                    .custom-scrollbar::-webkit-scrollbar-track {
-                        background: transparent;
-                    }
-                    .custom-scrollbar::-webkit-scrollbar-thumb {
-                        background: linear-gradient(180deg, #34d399 0%, #059669 100%);
-                        border-radius: 10px;
-                    }
-                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                        background: linear-gradient(180deg, #10b981 0%, #047857 100%);
-                    }
-                `}
-            </style>
-            <div className={containerClass}>
-                {/* Fixed Header */}
-                <div className="absolute top-0 left-0 right-0 z-20 bg-gray-50/95 backdrop-blur-md p-4 border-b border-gray-200 flex justify-between items-center shadow-sm">
-                    <h3 className="text-xl font-semibold text-gray-800">Generated Prompts</h3>
-                    <Tooltip content="Download all prompts as a JSON file">
-                        <button
-                            onClick={handleDownload}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors shadow-sm"
-                            aria-label="Download JSON"
-                        >
-                            <DownloadIcon className="h-4 w-4" />
-                            <span>Download JSON</span>
-                        </button>
-                    </Tooltip>
-                </div>
-
-                {/* Scrollable Content */}
-                <div className={scrollContainerClass}>
-                    <div className="flex flex-col">
-                        {prompts.map((prompt, index) => (
-                            <div key={prompt.id} className={index === 0 ? "mt-[100px]" : "mt-[5px]"}>
-                                <PromptCard 
-                                    prompt={prompt} 
-                                    index={index} 
-                                    isOpen={openPromptId === prompt.id}
-                                    onToggle={() => toggleAccordion(prompt.id)}
-                                    categoryId={categoryId}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </>
+      <Shell>
+        <div className="bg-gray-50/50 rounded-2xl border border-gray-200/80 p-4">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <SparkleIcon className="h-5 w-5 text-emerald-500 animate-pulse" />
+            Writing your prompts...
+          </h3>
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </div>
+      </Shell>
     );
+  }
+
+  if (error) {
+    return (
+      <Shell>
+        <div className="flex flex-col items-center justify-center min-h-[20rem] bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <div className="bg-red-100 p-3 rounded-full mb-4">
+            <svg className="h-6 w-6 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-red-800 mb-2">That didn't work</h3>
+          <p className="text-red-700 max-w-md text-sm leading-relaxed">{error}</p>
+        </div>
+      </Shell>
+    );
+  }
+
+  if (prompts.length === 0) {
+    return (
+      <Shell>
+        <div className="flex flex-col items-center justify-center min-h-[20rem] bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
+          <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-4 rounded-full mb-4">
+            <SparkleIcon className="h-8 w-8 text-green-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-800">Your prompts will appear here</h3>
+          <p className="text-gray-500 max-w-sm mt-2">
+            Describe your idea on the left and hit Generate.
+          </p>
+        </div>
+      </Shell>
+    );
+  }
+
+  return (
+    <Shell>
+      <div className="bg-gray-50/50 rounded-2xl border border-gray-200/80 shadow-inner flex flex-col max-h-[calc(100vh-2rem)]">
+        <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white/95 backdrop-blur-md rounded-t-2xl">
+          <h3 className="text-lg font-semibold text-gray-800">
+            {prompts.length} {prompts.length === 1 ? 'prompt' : 'prompts'}
+          </h3>
+          <div className="flex items-center gap-2">
+            <Tooltip content={copiedAll ? 'Copied!' : 'Copy all prompts'}>
+              <button
+                onClick={handleCopyAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors shadow-sm"
+              >
+                {copiedAll ? <CheckIcon className="h-4 w-4 text-green-600" /> : <CopyIcon className="h-4 w-4" />}
+                <span className="hidden sm:inline">Copy all</span>
+              </button>
+            </Tooltip>
+            <Tooltip content="Download all prompts as a text file">
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors shadow-sm"
+              >
+                <DownloadIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Download</span>
+              </button>
+            </Tooltip>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 space-y-3 scroll-smooth">
+          {prompts.map((prompt, index) => (
+            <PromptCard
+              key={prompt.id}
+              prompt={prompt}
+              index={index}
+              isOpen={openPromptId === prompt.id}
+              onToggle={() => setOpenPromptId((previous) => (previous === prompt.id ? null : prompt.id))}
+            />
+          ))}
+        </div>
+      </div>
+    </Shell>
+  );
 };

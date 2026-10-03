@@ -1,0 +1,92 @@
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Tailwind's global preflight is disabled (see tailwind.config.js) so that
+ * embedding this app in a WordPress page cannot restyle the host theme.
+ * These rules are the parts of the reset the app actually needs, scoped to
+ * the app container so they stay inside it.
+ */
+.napnox-app,
+.napnox-app *,
+.napnox-app *::before,
+.napnox-app *::after {
+  box-sizing: border-box;
+}
+
+.napnox-app {
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+  color: #1f2937;
+  text-align: left;
+}
+
+.napnox-app h1,
+.napnox-app h2,
+.napnox-app h3,
+.napnox-app h4,
+.napnox-app p,
+.napnox-app ul,
+.napnox-app figure {
+  margin: 0;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.napnox-app ul {
+  list-style: none;
+}
+
+.napnox-app button,
+.napnox-app input,
+.napnox-app select,
+.napnox-app textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+.napnox-app button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-transform: none;
+}
+
+.napnox-app button:disabled {
+  cursor: not-allowed;
+}
+
+.napnox-app a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.napnox-app svg {
+  display: block;
+}
+
+.napnox-app img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Results pane scrollbar. */
+.napnox-app .custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.napnox-app .custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.napnox-app .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+  border-radius: 10px;
+}
+
+.napnox-app .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+}

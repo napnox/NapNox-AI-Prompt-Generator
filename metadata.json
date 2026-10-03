@@ -1,5 +1,5 @@
 {
-  "name": "NapNox AI Prompt Generator",
-  "description": "Generate professional prompts for Image, Writing, Code, and the new AI Portrait Transformer. Select a category, customize filters, and get instant results for Gemini, Midjourney, and ChatGPT.",
+  "name": "NapNox Master AI Prompt Generator",
+  "description": "One master prompt generator for registered members. Describe an idea in plain language and get ready-to-paste prompts for any AI tool. Embeds in WordPress: login required, 10 free generations per account, then contact for unlimited.",
   "requestFramePermissions": []
 }

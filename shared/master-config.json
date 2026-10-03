@@ -1,0 +1,208 @@
+{
+  "version": 2,
+  "model": "gemini-2.5-flash",
+  "defaults": {
+    "freeLimit": 10,
+    "numVariations": 3,
+    "maxVariations": 5,
+    "maxInputChars": 2000,
+    "maxContextChars": 1000,
+    "maxImageBytes": 4194304
+  },
+  "detailLevels": [
+    {
+      "value": "concise",
+      "label": "Concise",
+      "guidance": "Keep each prompt tight and immediately usable - roughly 40-80 words, no section headings, no filler."
+    },
+    {
+      "value": "balanced",
+      "label": "Balanced",
+      "guidance": "Use 3-5 short labelled sections per prompt and roughly 120-200 words. Detailed enough to be specific, short enough to paste anywhere."
+    },
+    {
+      "value": "detailed",
+      "label": "Highly detailed",
+      "guidance": "Use 5-8 labelled sections per prompt and roughly 250-400 words. Cover edge cases, constraints, tone and technical parameters."
+    }
+  ],
+  "promptTypes": [
+    {
+      "value": "auto",
+      "label": "Auto-detect",
+      "description": "Let the AI work out what kind of prompt fits best.",
+      "guidance": "First infer what the user is actually trying to make from their idea - an image, a video, written copy, code, a chatbot persona, a business document, a lesson, and so on. State the detected type at the start of each prompt's Concept line, then write the prompt using the conventions of that medium."
+    },
+    {
+      "value": "image",
+      "label": "Image",
+      "description": "Stills for Midjourney, DALL-E, Stable Diffusion and friends.",
+      "guidance": "Write prompts for an image generator. Cover subject, composition and framing, art style, lighting, colour palette, mood, level of detail and render quality. Include camera and lens language where it helps. Never describe the image as if narrating a story - describe it as a visual specification."
+    },
+    {
+      "value": "portrait",
+      "label": "Portrait transform",
+      "description": "Restyle or transform a person's photo.",
+      "guidance": "Write prompts that transform an existing portrait. Preserve the subject's identity, facial structure and likeness explicitly in every variation, then specify the new style, wardrobe, setting, lighting and post-processing. Always add an instruction to keep the face unaltered and natural."
+    },
+    {
+      "value": "video",
+      "label": "Video",
+      "description": "Clips for Sora, Veo, Runway, Kling.",
+      "guidance": "Write prompts for a video generator. Cover the shot sequence, camera movement, subject action over time, pacing, duration, lighting continuity, aspect ratio and mood. Describe motion explicitly - what changes between the first and last frame."
+    },
+    {
+      "value": "writing",
+      "label": "Writing",
+      "description": "Articles, stories, scripts, copy.",
+      "guidance": "Write prompts that brief an AI writer. Specify the role it should adopt, target audience, tone of voice, structure, length, formatting and what to avoid. Include a concrete success criterion for the finished piece."
+    },
+    {
+      "value": "code",
+      "label": "Code",
+      "description": "Features, refactors, debugging, reviews.",
+      "guidance": "Write prompts for a coding assistant. Specify the language and version, framework, the exact task, input and output contracts, error handling, performance and security constraints, and the expected deliverable (full file, diff, or explanation). Ask for tests where relevant."
+    },
+    {
+      "value": "chat",
+      "label": "Chatbot persona",
+      "description": "System prompts and AI personas.",
+      "guidance": "Write system prompts that define an AI assistant. Cover identity and role, scope and boundaries, tone, response format, how to handle unknowns and refusals, and a few behavioural examples. Write in the second person addressed to the assistant."
+    },
+    {
+      "value": "business",
+      "label": "Business",
+      "description": "Plans, proposals, emails, strategy.",
+      "guidance": "Write prompts that produce professional business output. Specify the business context, stakeholders, objective, deliverable format, level of formality and any metrics or frameworks to apply."
+    },
+    {
+      "value": "marketing",
+      "label": "Marketing & social",
+      "description": "Ads, captions, campaigns, hooks.",
+      "guidance": "Write prompts that produce marketing output. Specify the platform and its format limits, the target audience and their pain point, the hook, the call to action, the brand voice and any hashtag or character constraints."
+    },
+    {
+      "value": "seo",
+      "label": "SEO",
+      "description": "Keywords, briefs, metadata.",
+      "guidance": "Write prompts for SEO work. Specify the primary and secondary keywords, search intent, target word count, heading structure, internal linking, metadata requirements and readability target. Require natural keyword use, never stuffing."
+    },
+    {
+      "value": "education",
+      "label": "Education",
+      "description": "Lessons, quizzes, explanations.",
+      "guidance": "Write prompts that produce teaching material. Specify the learner's level and prior knowledge, the learning objective, the explanation approach, worked examples, checks for understanding and common misconceptions to pre-empt."
+    },
+    {
+      "value": "design",
+      "label": "Design & UI",
+      "description": "Logos, mockups, brand systems.",
+      "guidance": "Write prompts for design work. Specify the deliverable, brand personality, colour and typography direction, layout and spacing, accessibility requirements and the format the output should be delivered in."
+    },
+    {
+      "value": "productivity",
+      "label": "Productivity",
+      "description": "Automations, workflows, planning.",
+      "guidance": "Write prompts that produce a practical workflow or plan. Specify the current situation, the desired outcome, constraints such as time and tools, and require concrete, ordered, actionable steps rather than general advice."
+    },
+    {
+      "value": "art",
+      "label": "Art style",
+      "description": "Work in the voice of a style or movement.",
+      "guidance": "Write prompts that reproduce a specific artistic style. Name the defining visual motifs, techniques, textures, palette and historical context of the style, and describe how the subject is rendered through it."
+    }
+  ],
+  "platforms": [
+    {
+      "value": "auto",
+      "label": "Any / not sure",
+      "types": [],
+      "guidance": "Write platform-neutral prompts in plain prose that work well in any modern AI tool. Do not use vendor-specific flags or syntax."
+    },
+    {
+      "value": "ChatGPT",
+      "label": "ChatGPT",
+      "types": ["writing", "code", "chat", "business", "marketing", "seo", "education", "productivity"],
+      "guidance": "Conversational model. Favour a clear role assignment, structured markdown instructions and an explicit output format. No special syntax."
+    },
+    {
+      "value": "Gemini",
+      "label": "Gemini",
+      "types": ["writing", "code", "chat", "business", "marketing", "seo", "education", "productivity", "image"],
+      "guidance": "Conversational model with strong multimodal and long-context handling. Favour explicit structure and step-by-step instructions. No special syntax."
+    },
+    {
+      "value": "Claude",
+      "label": "Claude",
+      "types": ["writing", "code", "chat", "business", "education", "productivity"],
+      "guidance": "Conversational model that responds well to XML-style tags for sections, a stated role, and explicit reasoning instructions."
+    },
+    {
+      "value": "Midjourney",
+      "label": "Midjourney",
+      "types": ["image", "portrait", "art", "design"],
+      "guidance": "Image generator. Use dense comma-separated descriptive phrases rather than full sentences, and end with parameters such as --ar 16:9 --style raw --v 6 where appropriate. Avoid negation words; use --no instead."
+    },
+    {
+      "value": "DALL-E 3",
+      "label": "DALL-E 3",
+      "types": ["image", "portrait", "art", "design"],
+      "guidance": "Image generator that prefers natural, descriptive full sentences over keyword soup. No parameter flags. Be explicit about text rendering if text must appear."
+    },
+    {
+      "value": "Stable Diffusion",
+      "label": "Stable Diffusion",
+      "types": ["image", "portrait", "art", "design"],
+      "guidance": "Image generator. Use weighted comma-separated tags, and supply a separate negative prompt listing artefacts to avoid."
+    },
+    {
+      "value": "Flux",
+      "label": "Flux",
+      "types": ["image", "portrait", "art", "design"],
+      "guidance": "Image generator that handles long natural-language descriptions and in-image text well. Write flowing descriptive prose."
+    },
+    {
+      "value": "Leonardo AI",
+      "label": "Leonardo AI",
+      "types": ["image", "portrait", "art", "design"],
+      "guidance": "Image generator. Use descriptive phrases plus explicit style and quality modifiers."
+    },
+    {
+      "value": "Sora",
+      "label": "Sora",
+      "types": ["video"],
+      "guidance": "Video generator. Describe the shot cinematically, including camera movement, subject motion and how the scene evolves across the clip."
+    },
+    {
+      "value": "Veo",
+      "label": "Veo",
+      "types": ["video"],
+      "guidance": "Video generator. Describe the scene, camera work, motion and audio atmosphere in natural prose, and state the duration and aspect ratio."
+    },
+    {
+      "value": "Runway",
+      "label": "Runway",
+      "types": ["video"],
+      "guidance": "Video generator. Keep motion instructions concise and concrete, and specify camera movement explicitly."
+    },
+    {
+      "value": "Kling",
+      "label": "Kling",
+      "types": ["video"],
+      "guidance": "Video generator. Describe subject motion and camera movement separately and keep the scene focused on one continuous action."
+    },
+    {
+      "value": "GitHub Copilot",
+      "label": "GitHub Copilot",
+      "types": ["code"],
+      "guidance": "In-editor coding assistant. Write prompts as precise implementation instructions with file and function context."
+    },
+    {
+      "value": "Cursor",
+      "label": "Cursor",
+      "types": ["code"],
+      "guidance": "Agentic coding editor. Write prompts that state the goal, the files in scope, the constraints and the acceptance criteria."
+    }
+  ],
+  "masterTemplate": "You are the NapNox Master Prompt Engineer. You turn a short idea into polished, ready-to-use prompts for AI systems. You write prompts - you never answer the idea yourself.\n\n=== THE USER'S IDEA ===\n{{inputText}}\n=== END OF IDEA ===\n\nBRIEF\n- Prompt type: {{promptType}}\n- Target AI platform: {{platform}}\n- Detail level: {{detail}}\n- Number of prompts to write: {{numVariations}}\n{{extraContext}}{{imageNote}}\n\nTYPE GUIDANCE\n{{typeGuidance}}\n\nPLATFORM GUIDANCE\n{{platformGuidance}}\n\nDETAIL GUIDANCE\n{{detailGuidance}}\n\nRULES\n1. Write exactly {{numVariations}} prompts. Each must be genuinely different in approach or angle - not the same prompt reworded.\n2. Every prompt must be complete and ready to paste straight into {{platform}} with no editing and no placeholders to fill in.\n3. Never ask the user a question and never explain what you are doing. Output prompts only.\n4. Be concrete. Replace every vague adjective with a specific, sensory or measurable detail.\n5. Preserve the user's intent exactly. Enrich their idea - never substitute a different subject.\n6. If the idea is vague, make confident, sensible creative choices and commit to them rather than hedging.\n7. Use **bold labels** to mark sections inside a prompt when the detail level calls for sections. Never use markdown headings or bullet characters.\n8. Open every prompt with a line that begins with **Concept:** followed by one sentence summarising that variation's angle.\n9. Give each prompt 3 to 5 lowercase tags describing its style, medium and platform.\n\nReturn your answer using the required JSON schema and nothing else."
+}
