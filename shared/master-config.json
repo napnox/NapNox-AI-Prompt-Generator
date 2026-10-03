@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "model": "gemini-2.5-flash",
   "defaults": {
     "freeLimit": 10,
@@ -26,183 +26,1478 @@
       "guidance": "Use 5-8 labelled sections per prompt and roughly 250-400 words. Cover edge cases, constraints, tone and technical parameters."
     }
   ],
-  "promptTypes": [
+  "auto": {
+    "label": "Auto-detect (master)",
+    "description": "Let the AI work out which kind of prompt fits your idea.",
+    "guidance": "First infer what the user is actually trying to make from their idea - an image, a video, written copy, code, a chatbot persona, a business document, a lesson, and so on. State the detected type at the start of each prompt's Concept line, then write the prompt using the conventions of that medium.",
+    "platforms": [
+      {
+        "value": "auto",
+        "label": "Any / not sure",
+        "types": [],
+        "guidance": "Write platform-neutral prompts in plain prose that work well in any modern AI tool. Do not use vendor-specific flags or syntax."
+      },
+      {
+        "value": "ChatGPT",
+        "label": "ChatGPT",
+        "types": [
+          "writing",
+          "code",
+          "chat",
+          "business",
+          "marketing",
+          "seo",
+          "education",
+          "productivity"
+        ],
+        "guidance": "Conversational model. Favour a clear role assignment, structured markdown instructions and an explicit output format. No special syntax."
+      },
+      {
+        "value": "Gemini",
+        "label": "Gemini",
+        "types": [
+          "writing",
+          "code",
+          "chat",
+          "business",
+          "marketing",
+          "seo",
+          "education",
+          "productivity",
+          "image"
+        ],
+        "guidance": "Conversational model with strong multimodal and long-context handling. Favour explicit structure and step-by-step instructions. No special syntax."
+      },
+      {
+        "value": "Claude",
+        "label": "Claude",
+        "types": [
+          "writing",
+          "code",
+          "chat",
+          "business",
+          "education",
+          "productivity"
+        ],
+        "guidance": "Conversational model that responds well to XML-style tags for sections, a stated role, and explicit reasoning instructions."
+      },
+      {
+        "value": "Midjourney",
+        "label": "Midjourney",
+        "types": [
+          "image",
+          "portrait",
+          "art",
+          "design"
+        ],
+        "guidance": "Image generator. Use dense comma-separated descriptive phrases rather than full sentences, and end with parameters such as --ar 16:9 --style raw --v 6 where appropriate. Avoid negation words; use --no instead."
+      },
+      {
+        "value": "DALL-E 3",
+        "label": "DALL-E 3",
+        "types": [
+          "image",
+          "portrait",
+          "art",
+          "design"
+        ],
+        "guidance": "Image generator that prefers natural, descriptive full sentences over keyword soup. No parameter flags. Be explicit about text rendering if text must appear."
+      },
+      {
+        "value": "Stable Diffusion",
+        "label": "Stable Diffusion",
+        "types": [
+          "image",
+          "portrait",
+          "art",
+          "design"
+        ],
+        "guidance": "Image generator. Use weighted comma-separated tags, and supply a separate negative prompt listing artefacts to avoid."
+      },
+      {
+        "value": "Flux",
+        "label": "Flux",
+        "types": [
+          "image",
+          "portrait",
+          "art",
+          "design"
+        ],
+        "guidance": "Image generator that handles long natural-language descriptions and in-image text well. Write flowing descriptive prose."
+      },
+      {
+        "value": "Leonardo AI",
+        "label": "Leonardo AI",
+        "types": [
+          "image",
+          "portrait",
+          "art",
+          "design"
+        ],
+        "guidance": "Image generator. Use descriptive phrases plus explicit style and quality modifiers."
+      },
+      {
+        "value": "Sora",
+        "label": "Sora",
+        "types": [
+          "video"
+        ],
+        "guidance": "Video generator. Describe the shot cinematically, including camera movement, subject motion and how the scene evolves across the clip."
+      },
+      {
+        "value": "Veo",
+        "label": "Veo",
+        "types": [
+          "video"
+        ],
+        "guidance": "Video generator. Describe the scene, camera work, motion and audio atmosphere in natural prose, and state the duration and aspect ratio."
+      },
+      {
+        "value": "Runway",
+        "label": "Runway",
+        "types": [
+          "video"
+        ],
+        "guidance": "Video generator. Keep motion instructions concise and concrete, and specify camera movement explicitly."
+      },
+      {
+        "value": "Kling",
+        "label": "Kling",
+        "types": [
+          "video"
+        ],
+        "guidance": "Video generator. Describe subject motion and camera movement separately and keep the scene focused on one continuous action."
+      },
+      {
+        "value": "GitHub Copilot",
+        "label": "GitHub Copilot",
+        "types": [
+          "code"
+        ],
+        "guidance": "In-editor coding assistant. Write prompts as precise implementation instructions with file and function context."
+      },
+      {
+        "value": "Cursor",
+        "label": "Cursor",
+        "types": [
+          "code"
+        ],
+        "guidance": "Agentic coding editor. Write prompts that state the goal, the files in scope, the constraints and the acceptance criteria."
+      }
+    ]
+  },
+  "masterTemplate": "You are the NapNox Master Prompt Engineer. You turn a short idea into polished, ready-to-use prompts for AI systems. You write prompts - you never answer the idea yourself.\n\n=== THE USER'S IDEA ===\n{{inputText}}\n=== END OF IDEA ===\n\nBRIEF\n- Prompt type: {{promptType}}\n- Target AI platform: {{platform}}\n- Detail level: {{detail}}\n- Number of prompts to write: {{numVariations}}\n{{extraContext}}{{imageNote}}\n\nTYPE GUIDANCE\n{{typeGuidance}}\n\nPLATFORM GUIDANCE\n{{platformGuidance}}\n\nDETAIL GUIDANCE\n{{detailGuidance}}\n\nRULES\n1. Write exactly {{numVariations}} prompts. Each must be genuinely different in approach or angle - not the same prompt reworded.\n2. Every prompt must be complete and ready to paste straight into {{platform}} with no editing and no placeholders to fill in.\n3. Never ask the user a question and never explain what you are doing. Output prompts only.\n4. Be concrete. Replace every vague adjective with a specific, sensory or measurable detail.\n5. Preserve the user's intent exactly. Enrich their idea - never substitute a different subject.\n6. If the idea is vague, make confident, sensible creative choices and commit to them rather than hedging.\n7. Use **bold labels** to mark sections inside a prompt when the detail level calls for sections. Never use markdown headings or bullet characters.\n8. Open every prompt with a line that begins with **Concept:** followed by one sentence summarising that variation's angle.\n9. Give each prompt 3 to 5 lowercase tags describing its style, medium and platform.\n\nReturn your answer using the required JSON schema and nothing else.",
+  "categories": [
     {
-      "value": "auto",
-      "label": "Auto-detect",
-      "description": "Let the AI work out what kind of prompt fits best.",
-      "guidance": "First infer what the user is actually trying to make from their idea - an image, a video, written copy, code, a chatbot persona, a business document, a lesson, and so on. State the detected type at the start of each prompt's Concept line, then write the prompt using the conventions of that medium."
+      "id": "image",
+      "name": "Image",
+      "description": "Create detailed prompts for image generation AIs.",
+      "subtypes": [
+        "Photorealistic",
+        "Digital Art",
+        "Illustration",
+        "3D Render",
+        "Logo",
+        "Concept Art",
+        "Architectural Viz",
+        "Character Design"
+      ],
+      "filters": [
+        {
+          "id": "style",
+          "label": "Art Style",
+          "type": "select",
+          "options": [
+            {
+              "value": "cinematic",
+              "label": "Cinematic"
+            },
+            {
+              "value": "cyberpunk",
+              "label": "Cyberpunk"
+            },
+            {
+              "value": "fantasy",
+              "label": "Fantasy"
+            },
+            {
+              "value": "anime",
+              "label": "Anime"
+            },
+            {
+              "value": "steampunk",
+              "label": "Steampunk"
+            },
+            {
+              "value": "vaporwave",
+              "label": "Vaporwave"
+            },
+            {
+              "value": "minimalist",
+              "label": "Minimalist"
+            },
+            {
+              "value": "impressionistic",
+              "label": "Impressionistic"
+            }
+          ]
+        },
+        {
+          "id": "mood",
+          "label": "Mood",
+          "type": "select",
+          "options": [
+            {
+              "value": "dramatic",
+              "label": "Dramatic"
+            },
+            {
+              "value": "cheerful",
+              "label": "Cheerful"
+            },
+            {
+              "value": "mysterious",
+              "label": "Mysterious"
+            },
+            {
+              "value": "serene",
+              "label": "Serene"
+            },
+            {
+              "value": "energetic",
+              "label": "Energetic"
+            },
+            {
+              "value": "nostalgic",
+              "label": "Nostalgic"
+            },
+            {
+              "value": "ominous",
+              "label": "Ominous"
+            },
+            {
+              "value": "epic",
+              "label": "Epic"
+            }
+          ]
+        },
+        {
+          "id": "camera",
+          "label": "Camera Details",
+          "type": "textarea",
+          "placeholder": "e.g., aerial view, 85mm lens, f/1.8"
+        },
+        {
+          "id": "negativeKeywords",
+          "label": "Negative Keywords",
+          "type": "textarea",
+          "placeholder": "e.g., ugly, blurry, watermark"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Platform",
+        "options": [
+          {
+            "value": "Midjourney",
+            "label": "Midjourney"
+          },
+          {
+            "value": "DALL-E 3",
+            "label": "DALL-E 3"
+          },
+          {
+            "value": "Stable Diffusion",
+            "label": "Stable Diffusion"
+          },
+          {
+            "value": "Leonardo AI",
+            "label": "Leonardo AI"
+          },
+          {
+            "value": "Adobe Firefly",
+            "label": "Adobe Firefly"
+          },
+          {
+            "value": "Ideogram",
+            "label": "Ideogram"
+          },
+          {
+            "value": "Playground AI",
+            "label": "Playground AI"
+          }
+        ]
+      },
+      "template": "As an expert prompt engineer for {{platform}}, generate {{numVariations}} distinct, highly detailed prompts based on the following idea. Each prompt must be a ready-to-use, single block of text and structured with bold headings.\n\n**Core Idea:** \"{{inputText}}\"\n**Subtype:** {{subtype}}\n**Style:** {{style}}\n**Mood:** {{mood}}\n\nFor each variation, create a complete prompt with these sections:\n- **Concept:** A single, powerful sentence capturing the artistic vision.\n- **Visual Description:** A detailed paragraph describing the subject, environment, composition, and key visual elements.\n- **Style & Mood:** A description of the artistic style, overall mood, color palette, and lighting.\n- **Technical Specs:** Specific camera angles, lens types, and any relevant platform-specific parameters (e.g., --ar 16:9). Include: \"{{camera}}\".\n- **Negative Prompt (optional):** Mention things to avoid, like \"{{negativeKeywords}}\".\n\nFinally, provide 5 relevant, SEO-friendly tags for the generated image."
     },
     {
-      "value": "image",
-      "label": "Image",
-      "description": "Stills for Midjourney, DALL-E, Stable Diffusion and friends.",
-      "guidance": "Write prompts for an image generator. Cover subject, composition and framing, art style, lighting, colour palette, mood, level of detail and render quality. Include camera and lens language where it helps. Never describe the image as if narrating a story - describe it as a visual specification."
+      "id": "portrait_transformer",
+      "name": "Portrait Transformer",
+      "description": "Upload a photo and generate prompts to transform into a specific persona.",
+      "subtypes": [
+        "Standard Transformation"
+      ],
+      "filters": [
+        {
+          "id": "userImage",
+          "label": "Upload Your Photo (Optional)",
+          "type": "file"
+        },
+        {
+          "id": "persona",
+          "label": "Persona / Role",
+          "type": "select",
+          "options": [
+            {
+              "value": "Business Professional",
+              "label": "Business Professional"
+            },
+            {
+              "value": "CEO / Founder",
+              "label": "CEO / Founder"
+            },
+            {
+              "value": "Corporate Portrait",
+              "label": "Corporate Portrait"
+            },
+            {
+              "value": "University Student",
+              "label": "University Student"
+            },
+            {
+              "value": "Professor / Educator",
+              "label": "Professor / Educator"
+            },
+            {
+              "value": "Creative Designer",
+              "label": "Creative Designer"
+            },
+            {
+              "value": "Cinematic Hero",
+              "label": "Cinematic Hero"
+            },
+            {
+              "value": "Cyberpunk Character",
+              "label": "Cyberpunk Character"
+            },
+            {
+              "value": "Fantasy Warrior",
+              "label": "Fantasy Warrior"
+            },
+            {
+              "value": "Tech Influencer",
+              "label": "Tech Influencer"
+            },
+            {
+              "value": "Model / Fashion Editorial",
+              "label": "Model / Fashion Editorial"
+            },
+            {
+              "value": "Gamer / Streamer",
+              "label": "Gamer / Streamer"
+            },
+            {
+              "value": "Medical Professional",
+              "label": "Medical Professional"
+            },
+            {
+              "value": "Engineer / Architect",
+              "label": "Engineer / Architect"
+            }
+          ]
+        },
+        {
+          "id": "style",
+          "label": "Style",
+          "type": "select",
+          "options": [
+            {
+              "value": "Photorealistic",
+              "label": "Photorealistic"
+            },
+            {
+              "value": "Cinematic",
+              "label": "Cinematic"
+            },
+            {
+              "value": "Magazine Editorial",
+              "label": "Magazine Editorial"
+            },
+            {
+              "value": "Minimalist Clean",
+              "label": "Minimalist Clean"
+            },
+            {
+              "value": "High-Contrast Dramatic",
+              "label": "High-Contrast Dramatic"
+            },
+            {
+              "value": "Soft Natural Light",
+              "label": "Soft Natural Light"
+            },
+            {
+              "value": "Cyberpunk Neon",
+              "label": "Cyberpunk Neon"
+            },
+            {
+              "value": "Vintage Film",
+              "label": "Vintage Film"
+            },
+            {
+              "value": "Futuristic Sci-Fi",
+              "label": "Futuristic Sci-Fi"
+            },
+            {
+              "value": "Pixar / Stylized",
+              "label": "Pixar / Stylized"
+            }
+          ]
+        },
+        {
+          "id": "background",
+          "label": "Background",
+          "type": "select",
+          "options": [
+            {
+              "value": "Corporate Office",
+              "label": "Corporate Office"
+            },
+            {
+              "value": "Dark Cinematic Studio",
+              "label": "Dark Cinematic Studio"
+            },
+            {
+              "value": "Clean White Backdrop",
+              "label": "Clean White Backdrop"
+            },
+            {
+              "value": "University Library",
+              "label": "University Library"
+            },
+            {
+              "value": "Urban Cityscape",
+              "label": "Urban Cityscape"
+            },
+            {
+              "value": "Futuristic Tech Lab",
+              "label": "Futuristic Tech Lab"
+            },
+            {
+              "value": "Neon Alley",
+              "label": "Neon Alley"
+            },
+            {
+              "value": "Cozy Indoor Room",
+              "label": "Cozy Indoor Room"
+            },
+            {
+              "value": "Nature / Park",
+              "label": "Nature / Park"
+            }
+          ]
+        },
+        {
+          "id": "quality",
+          "label": "Quality / Enhancements",
+          "type": "select",
+          "options": [
+            {
+              "value": "Professional Studio Lighting",
+              "label": "Professional Studio Lighting"
+            },
+            {
+              "value": "Skin Retouching (Subtle)",
+              "label": "Skin Retouching (Subtle)"
+            },
+            {
+              "value": "High Dynamic Range",
+              "label": "High Dynamic Range"
+            },
+            {
+              "value": "Shallow Depth of Field",
+              "label": "Shallow Depth of Field"
+            },
+            {
+              "value": "Ultra-Sharp Details",
+              "label": "Ultra-Sharp Details"
+            }
+          ]
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Image Model",
+        "options": [
+          {
+            "value": "Gemini Imagen",
+            "label": "Gemini Imagen"
+          },
+          {
+            "value": "Midjourney v6",
+            "label": "Midjourney v6"
+          },
+          {
+            "value": "Stable Diffusion XL",
+            "label": "Stable Diffusion XL"
+          },
+          {
+            "value": "Leonardo Phoenix",
+            "label": "Leonardo Phoenix"
+          }
+        ]
+      },
+      "template": "Analyze the user's uploaded photo (if provided) to understand their facial structure and key features. As an expert photographer and prompt engineer for {{platform}}, generate {{numVariations}} high-quality image generation prompts that transform the subject into the following persona while preserving their identity (if an image was provided).\n\n**Core Idea/Input:** \"{{inputText}}\"\n**Target Persona:** {{persona}}\n**Art Style:** {{style}}\n**Setting/Background:** {{background}}\n**Enhancements:** {{quality}}\n\nFor each variation, create a complete prompt with these sections:\n- **Concept:** A one-line summary. Example: \"Portrait 1 / Variation 1 - {{persona}} in {{background}}\".\n- **Subject Description:** Detailed instructions to generate a {{persona}} with the user's features (if referenced) or generic high-quality features. Describe clothing, pose, and expression suitable for a {{persona}}.\n- **Environment:** Describe the {{background}} in detail.\n- **Style & Technicals:** apply the {{style}} aesthetic. Include lighting ({{quality}}), camera angle, and film look.\n\nFinally, provide 5 relevant tags."
     },
     {
-      "value": "portrait",
-      "label": "Portrait transform",
-      "description": "Restyle or transform a person's photo.",
-      "guidance": "Write prompts that transform an existing portrait. Preserve the subject's identity, facial structure and likeness explicitly in every variation, then specify the new style, wardrobe, setting, lighting and post-processing. Always add an instruction to keep the face unaltered and natural."
+      "id": "writing",
+      "name": "Writing",
+      "description": "Craft prompts for articles, stories, and other written content.",
+      "subtypes": [
+        "Blog Post",
+        "Short Story",
+        "Marketing Copy",
+        "Email",
+        "Poem",
+        "Technical Documentation",
+        "Script/Screenplay",
+        "Academic Paper"
+      ],
+      "filters": [
+        {
+          "id": "tone",
+          "label": "Tone of Voice",
+          "type": "select",
+          "options": [
+            {
+              "value": "professional",
+              "label": "Professional"
+            },
+            {
+              "value": "casual",
+              "label": "Casual"
+            },
+            {
+              "value": "humorous",
+              "label": "Humorous"
+            },
+            {
+              "value": "empathetic",
+              "label": "Empathetic"
+            },
+            {
+              "value": "authoritative",
+              "label": "Authoritative"
+            },
+            {
+              "value": "inspirational",
+              "label": "Inspirational"
+            },
+            {
+              "value": "witty",
+              "label": "Witty"
+            }
+          ]
+        },
+        {
+          "id": "audience",
+          "label": "Target Audience",
+          "type": "textarea",
+          "placeholder": "e.g., developers, marketing managers"
+        },
+        {
+          "id": "keywords",
+          "label": "SEO Keywords",
+          "type": "textarea",
+          "placeholder": "e.g., AI, prompt engineering"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Model",
+        "options": [
+          {
+            "value": "Gemini Pro",
+            "label": "Gemini Pro"
+          },
+          {
+            "value": "ChatGPT-4",
+            "label": "ChatGPT-4"
+          },
+          {
+            "value": "Claude 3",
+            "label": "Claude 3"
+          },
+          {
+            "value": "Llama 3",
+            "label": "Llama 3"
+          },
+          {
+            "value": "Perplexity",
+            "label": "Perplexity"
+          },
+          {
+            "value": "Cohere Command R+",
+            "label": "Cohere Command R+"
+          }
+        ]
+      },
+      "template": "As an expert content strategist for {{platform}}, generate {{numVariations}} detailed writing prompts based on the following request. Each prompt must be a complete, ready-to-use instruction for an LLM.\n\n**Core Idea:** \"{{inputText}}\"\n**Content Type:** {{subtype}}\n**Tone:** {{tone}}\n**Audience:** {{audience}}\n\nFor each variation, create a complete prompt with these sections:\n- **Goal:** A clear, one-sentence objective for the written piece.\n- **Content Outline:** A structured outline with key sections, headings, or plot points.\n- **Key Instructions:** Specific directions on what to include, such as calls-to-action, data points, or character motivations.\n- **Constraints:** Any limitations, such as word count, reading level, or topics to avoid.\n- **SEO Keywords:** A list of keywords to naturally integrate: \"{{keywords}}\".\n\nFinally, provide 5 relevant tags for the topic."
     },
     {
-      "value": "video",
-      "label": "Video",
-      "description": "Clips for Sora, Veo, Runway, Kling.",
-      "guidance": "Write prompts for a video generator. Cover the shot sequence, camera movement, subject action over time, pacing, duration, lighting continuity, aspect ratio and mood. Describe motion explicitly - what changes between the first and last frame."
+      "id": "code",
+      "name": "Code",
+      "description": "Generate programming-related prompts for snippets and logic.",
+      "subtypes": [
+        "Function",
+        "Component",
+        "Algorithm",
+        "Test Case",
+        "Query",
+        "API Endpoint",
+        "Class/Object",
+        "Regex Pattern"
+      ],
+      "filters": [
+        {
+          "id": "language",
+          "label": "Programming Language",
+          "type": "select",
+          "options": [
+            {
+              "value": "javascript",
+              "label": "JavaScript"
+            },
+            {
+              "value": "python",
+              "label": "Python"
+            },
+            {
+              "value": "java",
+              "label": "Java"
+            },
+            {
+              "value": "csharp",
+              "label": "C#"
+            },
+            {
+              "value": "typescript",
+              "label": "TypeScript"
+            },
+            {
+              "value": "go",
+              "label": "Go"
+            },
+            {
+              "value": "rust",
+              "label": "Rust"
+            },
+            {
+              "value": "sql",
+              "label": "SQL"
+            },
+            {
+              "value": "php",
+              "label": "PHP"
+            }
+          ]
+        },
+        {
+          "id": "framework",
+          "label": "Framework/Library",
+          "type": "textarea",
+          "placeholder": "e.g., React, Django, .NET"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Model",
+        "options": [
+          {
+            "value": "Gemini Pro",
+            "label": "Gemini Pro"
+          },
+          {
+            "value": "GitHub Copilot",
+            "label": "GitHub Copilot"
+          },
+          {
+            "value": "ChatGPT-4 Code Interpreter",
+            "label": "ChatGPT-4 Code Interpreter"
+          },
+          {
+            "value": "Replit Ghostwriter",
+            "label": "Replit Ghostwriter"
+          },
+          {
+            "value": "Amazon CodeWhisperer",
+            "label": "Amazon CodeWhisperer"
+          }
+        ]
+      },
+      "template": "As a senior software architect, generate {{numVariations}} precise coding prompts for {{platform}}. Each prompt must be a clear, actionable instruction for a coding AI.\n\n**Task:** \"{{inputText}}\"\n**Code Type:** {{subtype}}\n**Language:** {{language}}\n**Framework/Library:** {{framework}}\n\nFor each variation, create a complete prompt with these sections:\n- **Objective:** A concise summary of what the code should accomplish.\n- **Input/Output:** Clear definitions of expected inputs (parameters, data types) and the desired output (return value, side effects).\n- **Requirements:** A list of specific requirements, constraints, or logic to be implemented.\n- **Edge Cases:** Examples of edge cases or error conditions that the code should handle.\n- **Example:** A simple example of how the {{subtype}} should be called or used.\n\nFinally, provide 5 relevant technical tags."
     },
     {
-      "value": "writing",
-      "label": "Writing",
-      "description": "Articles, stories, scripts, copy.",
-      "guidance": "Write prompts that brief an AI writer. Specify the role it should adopt, target audience, tone of voice, structure, length, formatting and what to avoid. Include a concrete success criterion for the finished piece."
+      "id": "video",
+      "name": "Video",
+      "description": "Design prompts for video script ideas and storyboards.",
+      "subtypes": [
+        "YouTube Script",
+        "Short Film Idea",
+        "Ad Script",
+        "Explainer Video",
+        "Music Video Concept",
+        "Documentary Treatment",
+        "B-Roll Shot List"
+      ],
+      "filters": [
+        {
+          "id": "duration",
+          "label": "Target Duration",
+          "type": "select",
+          "options": [
+            {
+              "value": "short (<15 sec)",
+              "label": "Very Short (<15 sec)"
+            },
+            {
+              "value": "short (15-60 sec)",
+              "label": "Short (15-60 sec)"
+            },
+            {
+              "value": "medium (1-5 min)",
+              "label": "Medium (1-5 min)"
+            },
+            {
+              "value": "long (>5 min)",
+              "label": "Long (>5 min)"
+            }
+          ]
+        },
+        {
+          "id": "style",
+          "label": "Video Style",
+          "type": "textarea",
+          "placeholder": "e.g., documentary, vlog, cinematic, fast-paced commercial"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Platform",
+        "options": [
+          {
+            "value": "Pika Labs",
+            "label": "Pika Labs"
+          },
+          {
+            "value": "Sora",
+            "label": "Sora"
+          },
+          {
+            "value": "RunwayML",
+            "label": "RunwayML"
+          },
+          {
+            "value": "YouTube",
+            "label": "YouTube"
+          },
+          {
+            "value": "TikTok",
+            "label": "TikTok"
+          },
+          {
+            "value": "Instagram Reels",
+            "label": "Instagram Reels"
+          }
+        ]
+      },
+      "template": "As a creative director for video production, generate {{numVariations}} detailed video prompts for {{platform}}. Each prompt must be a complete, cinematic description ready for a video generation AI.\n\n**Core Idea:** \"{{inputText}}\"\n**Video Type:** {{subtype}}\n**Style:** {{style}}\n**Duration:** {{duration}}\n\nFor each variation, create a complete prompt with these sections:\n- **Concept:** A one-sentence summary of the video's story or message.\n- **Visual Description:** A detailed paragraph describing the scene, characters, action, and environment.\n- **Cinematography:** Specific details on camera shots (e.g., wide shot, close-up), camera movement, and lighting.\n- **Pacing & Mood:** Instructions on the video's pacing (e.g., fast-paced, slow motion) and the desired emotional mood.\n- **Audio Cues:** Suggestions for sound effects or background music style.\n\nFinally, provide 5 relevant tags for the video content."
     },
     {
-      "value": "code",
-      "label": "Code",
-      "description": "Features, refactors, debugging, reviews.",
-      "guidance": "Write prompts for a coding assistant. Specify the language and version, framework, the exact task, input and output contracts, error handling, performance and security constraints, and the expected deliverable (full file, diff, or explanation). Ask for tests where relevant."
+      "id": "chat",
+      "name": "Chatbot",
+      "description": "Define personas and instructions for conversational AIs.",
+      "subtypes": [
+        "Customer Support",
+        "Personal Assistant",
+        "Tutor",
+        "Roleplay Character",
+        "Onboarding Guide",
+        "Sales Agent",
+        "FAQ Bot"
+      ],
+      "filters": [
+        {
+          "id": "persona",
+          "label": "Bot Persona",
+          "type": "textarea",
+          "placeholder": "e.g., a friendly and helpful guide, a witty Shakespearean poet"
+        },
+        {
+          "id": "constraints",
+          "label": "Rules & Constraints",
+          "type": "textarea",
+          "placeholder": "e.g., never give financial advice, must always talk in rhymes"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target System",
+        "options": [
+          {
+            "value": "Custom LLM",
+            "label": "Custom LLM"
+          },
+          {
+            "value": "Chatbot Platform",
+            "label": "Chatbot Platform"
+          },
+          {
+            "value": "Dialogflow",
+            "label": "Dialogflow"
+          },
+          {
+            "value": "Rasa",
+            "label": "Rasa"
+          },
+          {
+            "value": "Microsoft Bot Framework",
+            "label": "Microsoft Bot Framework"
+          },
+          {
+            "value": "Voiceflow",
+            "label": "Voiceflow"
+          }
+        ]
+      },
+      "template": "As a conversational AI designer, generate {{numVariations}} comprehensive system prompts for a {{platform}} chatbot.\n\n**Core Function:** \"{{inputText}}\"\n**Chatbot Type:** {{subtype}}\n\nFor each variation, create a complete system prompt with these sections:\n- **Persona:** A detailed description of the chatbot's personality, tone, and communication style. Embody this persona: \"{{persona}}\".\n- **Core Directives:** A clear list of the chatbot's primary goals and responsibilities.\n- **Behavioral Rules:** Specific rules the chatbot must always follow (e.g., \"Always be polite,\" \"Never break character\").\n- **Constraints & Guardrails:** Strict limitations on what the chatbot is not allowed to do or discuss. Enforce these constraints: \"{{constraints}}\".\n- **Example Opening:** A sample opening line that perfectly captures the chatbot's persona.\n\nFinally, provide 5 tags describing the chatbot's function."
     },
     {
-      "value": "chat",
-      "label": "Chatbot persona",
-      "description": "System prompts and AI personas.",
-      "guidance": "Write system prompts that define an AI assistant. Cover identity and role, scope and boundaries, tone, response format, how to handle unknowns and refusals, and a few behavioural examples. Write in the second person addressed to the assistant."
+      "id": "business",
+      "name": "Business",
+      "description": "Prompts for business plans, emails, and marketing strategies.",
+      "subtypes": [
+        "Business Plan",
+        "SWOT Analysis",
+        "Marketing Strategy",
+        "Press Release",
+        "Executive Summary",
+        "Pitch Deck Outline",
+        "User Persona"
+      ],
+      "filters": [
+        {
+          "id": "industry",
+          "label": "Industry",
+          "type": "textarea",
+          "placeholder": "e.g., SaaS, retail, healthcare"
+        },
+        {
+          "id": "company",
+          "label": "Company Name (optional)",
+          "type": "textarea",
+          "placeholder": "e.g., NapNox Inc."
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Context",
+        "options": [
+          {
+            "value": "Internal",
+            "label": "Internal Use"
+          },
+          {
+            "value": "External",
+            "label": "External / Public"
+          },
+          {
+            "value": "Investor Pitch",
+            "label": "Investor Pitch"
+          },
+          {
+            "value": "Board Meeting",
+            "label": "Board Meeting"
+          },
+          {
+            "value": "Team Brainstorm",
+            "label": "Team Brainstorm"
+          }
+        ]
+      },
+      "template": "As a senior business consultant, generate {{numVariations}} detailed prompts for creating a business document.\n\n**Topic:** \"{{inputText}}\"\n**Document Type:** {{subtype}}\n**Industry:** {{industry}}\n**Company:** {{company}}\n**Context:** {{platform}}\n\nFor each variation, create a complete prompt with these sections:\n- **Objective:** The primary goal of the document.\n- **Target Audience:** Who the document is intended for.\n- **Key Sections:** A structured outline of the required sections (e.g., for a Business Plan: Executive Summary, Market Analysis, Financial Projections).\n- **Critical Information:** Specific questions to answer or data points to include in each section.\n- **Formatting Instructions:** Guidelines on tone of voice, length, and presentation style.\n\nFinally, provide 5 relevant business tags."
     },
     {
-      "value": "business",
-      "label": "Business",
-      "description": "Plans, proposals, emails, strategy.",
-      "guidance": "Write prompts that produce professional business output. Specify the business context, stakeholders, objective, deliverable format, level of formality and any metrics or frameworks to apply."
+      "id": "education",
+      "name": "Education",
+      "description": "Prompts for lesson plans, quizzes, and learning materials.",
+      "subtypes": [
+        "Lesson Plan",
+        "Quiz",
+        "Study Guide",
+        "Language Practice",
+        "Course Outline",
+        "Essay Prompt",
+        "Flashcard Set"
+      ],
+      "filters": [
+        {
+          "id": "level",
+          "label": "Grade Level",
+          "type": "select",
+          "options": [
+            {
+              "value": "elementary",
+              "label": "Elementary"
+            },
+            {
+              "value": "middle school",
+              "label": "Middle School"
+            },
+            {
+              "value": "high school",
+              "label": "High School"
+            },
+            {
+              "value": "university",
+              "label": "University"
+            },
+            {
+              "value": "postgraduate",
+              "label": "Postgraduate"
+            }
+          ]
+        },
+        {
+          "id": "difficulty",
+          "label": "Difficulty",
+          "type": "select",
+          "options": [
+            {
+              "value": "beginner",
+              "label": "Beginner"
+            },
+            {
+              "value": "intermediate",
+              "label": "Intermediate"
+            },
+            {
+              "value": "advanced",
+              "label": "Advanced"
+            },
+            {
+              "value": "expert",
+              "label": "Expert"
+            }
+          ]
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Audience",
+        "options": [
+          {
+            "value": "Students",
+            "label": "Students"
+          },
+          {
+            "value": "Teachers",
+            "label": "Teachers"
+          },
+          {
+            "value": "Self-Learners",
+            "label": "Self-Learners"
+          },
+          {
+            "value": "Corporate Trainees",
+            "label": "Corporate Trainees"
+          }
+        ]
+      },
+      "template": "As an instructional designer, generate {{numVariations}} detailed prompts for educational content.\n\n**Topic:** \"{{inputText}}\"\n**Content Type:** {{subtype}}\n**Level:** {{level}}\n**Difficulty:** {{difficulty}}\n\nFor each variation, create a complete prompt with these sections:\n- **Learning Objective:** What the user should know or be able to do after this activity.\n- **Content Structure:** An outline of the material, including key topics, sections, or question types.\n- **Activity Description:** Specific instructions for the learning activity or assessment.\n- **Engagement Strategy:** Ideas to make the content more engaging and interactive.\n- **Assessment Criteria:** How to evaluate the user's understanding or performance.\n\nFinally, provide 5 relevant educational tags."
     },
     {
-      "value": "marketing",
-      "label": "Marketing & social",
-      "description": "Ads, captions, campaigns, hooks.",
-      "guidance": "Write prompts that produce marketing output. Specify the platform and its format limits, the target audience and their pain point, the hook, the call to action, the brand voice and any hashtag or character constraints."
+      "id": "productivity",
+      "name": "Productivity",
+      "description": "Prompts for resumes, interview prep, and goal setting.",
+      "subtypes": [
+        "Resume Bullets",
+        "Interview Prep",
+        "Daily Planner",
+        "Goal Setting",
+        "Cover Letter",
+        "Meeting Agenda",
+        "Project Plan"
+      ],
+      "filters": [
+        {
+          "id": "role",
+          "label": "Job Role",
+          "type": "textarea",
+          "placeholder": "e.g., Software Engineer, Project Manager"
+        },
+        {
+          "id": "industry",
+          "label": "Industry",
+          "type": "textarea",
+          "placeholder": "e.g., Tech, Finance, Healthcare"
+        },
+        {
+          "id": "tone",
+          "label": "Tone",
+          "type": "select",
+          "options": [
+            {
+              "value": "formal",
+              "label": "Formal"
+            },
+            {
+              "value": "action-oriented",
+              "label": "Action-Oriented"
+            },
+            {
+              "value": "inspirational",
+              "label": "Inspirational"
+            },
+            {
+              "value": "concise",
+              "label": "Concise"
+            },
+            {
+              "value": "persuasive",
+              "label": "Persuasive"
+            }
+          ]
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Context",
+        "options": [
+          {
+            "value": "Personal Use",
+            "label": "Personal Use"
+          },
+          {
+            "value": "Professional Application",
+            "label": "Professional Application"
+          },
+          {
+            "value": "Team Collaboration",
+            "label": "Team Collaboration"
+          },
+          {
+            "value": "Job Application",
+            "label": "Job Application"
+          }
+        ]
+      },
+      "template": "As a career coach, generate {{numVariations}} powerful prompts for productivity and career development.\n\n**Task:** \"{{inputText}}\"\n**Type:** {{subtype}}\n**Role:** {{role}}\n**Industry:** {{industry}}\n**Tone:** {{tone}}\n\nFor each variation, create a complete prompt with these sections:\n- **Objective:** The specific goal of the task.\n- **Key Information:** The essential details the user needs to provide or consider.\n- **Structure/Format:** A clear format for the output (e.g., STAR method for resume bullets, a daily schedule template).\n- **Guiding Questions:** Questions to help the user think critically and provide high-quality input.\n- **Success Criteria:** What a successful outcome looks like.\n\nFinally, provide 5 relevant tags for career development."
     },
     {
-      "value": "seo",
-      "label": "SEO",
-      "description": "Keywords, briefs, metadata.",
-      "guidance": "Write prompts for SEO work. Specify the primary and secondary keywords, search intent, target word count, heading structure, internal linking, metadata requirements and readability target. Require natural keyword use, never stuffing."
+      "id": "seo",
+      "name": "SEO",
+      "description": "Generate prompts for SEO-optimized content and strategies.",
+      "subtypes": [
+        "Blog Outline",
+        "Meta Descriptions",
+        "FAQ Schema",
+        "Keyword Clustering",
+        "Topic Cluster Strategy",
+        "Content Brief"
+      ],
+      "filters": [
+        {
+          "id": "keyword",
+          "label": "Target Keyword",
+          "type": "textarea",
+          "placeholder": "e.g., \"AI prompt generator\""
+        },
+        {
+          "id": "intent",
+          "label": "Search Intent",
+          "type": "select",
+          "options": [
+            {
+              "value": "informational",
+              "label": "Informational"
+            },
+            {
+              "value": "transactional",
+              "label": "Transactional"
+            },
+            {
+              "value": "navigational",
+              "label": "Navigational"
+            },
+            {
+              "value": "commercial investigation",
+              "label": "Commercial Investigation"
+            }
+          ]
+        },
+        {
+          "id": "wordCount",
+          "label": "Target Word Count",
+          "type": "textarea",
+          "placeholder": "e.g., 1500 words"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Tool/Model",
+        "options": [
+          {
+            "value": "Gemini Advanced",
+            "label": "Gemini Advanced"
+          },
+          {
+            "value": "ChatGPT-4",
+            "label": "ChatGPT-4"
+          },
+          {
+            "value": "SurferSEO",
+            "label": "SurferSEO"
+          },
+          {
+            "value": "Frase.io",
+            "label": "Frase.io"
+          },
+          {
+            "value": "MarketMuse",
+            "label": "MarketMuse"
+          }
+        ]
+      },
+      "template": "As an SEO specialist, generate {{numVariations}} detailed prompts for creating SEO-optimized content using {{platform}}.\n\n**Core Task:** \"{{inputText}}\"\n**Content Type:** {{subtype}}\n**Primary Keyword:** {{keyword}}\n**Search Intent:** {{intent}}\n**Word Count:** {{wordCount}}\n\nFor each variation, create a complete prompt with these sections:\n- **Objective:** The main goal of the content from an SEO perspective.\n- **Content Structure:** A detailed outline including H1, H2, and H3 headings that target the primary keyword and related subtopics.\n- **Semantic Keywords:** A list of LSI (Latent Semantic Indexing) keywords to include naturally within the content.\n- **On-Page SEO Elements:** Instructions for creating the title tag, meta description, and image alt-text.\n- **Internal/External Linking:** Suggestions for relevant internal and external links.\n\nFinally, provide 5 relevant SEO and content marketing tags."
     },
     {
-      "value": "education",
-      "label": "Education",
-      "description": "Lessons, quizzes, explanations.",
-      "guidance": "Write prompts that produce teaching material. Specify the learner's level and prior knowledge, the learning objective, the explanation approach, worked examples, checks for understanding and common misconceptions to pre-empt."
+      "id": "design",
+      "name": "Design",
+      "description": "Prompts for logos, UI mockups, and branding concepts.",
+      "subtypes": [
+        "Logo Concepts",
+        "UI Mockup",
+        "Moodboard",
+        "Typography Pairing",
+        "Icon Set",
+        "Brand Style Guide",
+        "Website Landing Page"
+      ],
+      "filters": [
+        {
+          "id": "personality",
+          "label": "Brand Personality",
+          "type": "textarea",
+          "placeholder": "e.g., minimalist, rugged, playful"
+        },
+        {
+          "id": "colors",
+          "label": "Color Palette",
+          "type": "textarea",
+          "placeholder": "e.g., earthy tones, neon pastels"
+        },
+        {
+          "id": "industry",
+          "label": "Industry",
+          "type": "textarea",
+          "placeholder": "e.g., coffee shop, tech startup"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target AI/Tool",
+        "options": [
+          {
+            "value": "Midjourney",
+            "label": "Midjourney"
+          },
+          {
+            "value": "Ideogram",
+            "label": "Ideogram"
+          },
+          {
+            "value": "Figma (for ideas)",
+            "label": "Figma (for ideas)"
+          },
+          {
+            "value": "Adobe Firefly",
+            "label": "Adobe Firefly"
+          },
+          {
+            "value": "Canva Magic Design",
+            "label": "Canva Magic Design"
+          },
+          {
+            "value": "Spline (3D)",
+            "label": "Spline (3D)"
+          }
+        ]
+      },
+      "template": "As a brand designer, generate {{numVariations}} detailed prompts for {{platform}} to create design assets.\n\n**Core Idea:** \"{{inputText}}\"\n**Asset Type:** {{subtype}}\n**Brand Personality:** {{personality}}\n**Color Palette:** {{colors}}\n**Industry:** {{industry}}\n\nFor each variation, create a complete prompt with these sections:\n- **Concept:** A one-sentence summary of the design's core idea.\n- **Visual Description:** A detailed paragraph describing the desired visuals, shapes, and composition.\n- **Style & Aesthetic:** The overall design style (e.g., flat design, brutalism, art deco).\n- **Key Elements:** A list of mandatory elements to include.\n- **Inspiration:** Mention of any artists, brands, or movements to draw inspiration from.\n\nFinally, provide 5 relevant design tags."
     },
     {
-      "value": "design",
-      "label": "Design & UI",
-      "description": "Logos, mockups, brand systems.",
-      "guidance": "Write prompts for design work. Specify the deliverable, brand personality, colour and typography direction, layout and spacing, accessibility requirements and the format the output should be delivered in."
+      "id": "social_media",
+      "name": "Social Media",
+      "description": "Prompts for TikTok scripts, Instagram captions, and Twitter threads.",
+      "subtypes": [
+        "Instagram Caption",
+        "Twitter Thread",
+        "TikTok Script",
+        "LinkedIn Post",
+        "YouTube Video Idea",
+        "Pinterest Pin Description"
+      ],
+      "filters": [
+        {
+          "id": "tone",
+          "label": "Tone",
+          "type": "select",
+          "options": [
+            {
+              "value": "witty",
+              "label": "Witty"
+            },
+            {
+              "value": "inspirational",
+              "label": "Inspirational"
+            },
+            {
+              "value": "educational",
+              "label": "Educational"
+            },
+            {
+              "value": "provocative",
+              "label": "Provocative"
+            },
+            {
+              "value": "humorous",
+              "label": "Humorous"
+            },
+            {
+              "value": "authentic",
+              "label": "Authentic"
+            }
+          ]
+        },
+        {
+          "id": "cta",
+          "label": "Call to Action",
+          "type": "textarea",
+          "placeholder": "e.g., \"Link in bio!\", \"What do you think?\""
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target Platform",
+        "options": [
+          {
+            "value": "Instagram",
+            "label": "Instagram"
+          },
+          {
+            "value": "X (Twitter)",
+            "label": "X (Twitter)"
+          },
+          {
+            "value": "TikTok",
+            "label": "TikTok"
+          },
+          {
+            "value": "LinkedIn",
+            "label": "LinkedIn"
+          },
+          {
+            "value": "YouTube",
+            "label": "YouTube"
+          },
+          {
+            "value": "Facebook",
+            "label": "Facebook"
+          },
+          {
+            "value": "Pinterest",
+            "label": "Pinterest"
+          },
+          {
+            "value": "Threads",
+            "label": "Threads"
+          }
+        ]
+      },
+      "template": "As a social media manager, generate {{numVariations}} engaging content prompts for {{platform}}.\n\n**Topic:** \"{{inputText}}\"\n**Post Type:** {{subtype}}\n**Tone:** {{tone}}\n\nFor each variation, create a complete prompt with these sections:\n- **Hook:** A powerful opening sentence to grab attention.\n- **Core Message:** The main body of the content, structured for the specific platform (e.g., numbered list for a thread, key points for a caption).\n- **Call to Action (CTA):** A clear instruction for the audience. Use this CTA: \"{{cta}}\".\n- **Hashtags:** A list of 5-7 relevant and trending hashtags.\n- **Visual Idea (optional):** A suggestion for a complementary image or video.\n\nFinally, provide 5 relevant tags for the content."
     },
     {
-      "value": "productivity",
-      "label": "Productivity",
-      "description": "Automations, workflows, planning.",
-      "guidance": "Write prompts that produce a practical workflow or plan. Specify the current situation, the desired outcome, constraints such as time and tools, and require concrete, ordered, actionable steps rather than general advice."
+      "id": "fashion",
+      "name": "Fashion",
+      "description": "Prompts for editorial photography, outfit design, and concepts.",
+      "subtypes": [
+        "Editorial Photoshoot",
+        "Outfit Design",
+        "Model Pose",
+        "Fabric Concept",
+        "Accessory Design",
+        "Lookbook Concept"
+      ],
+      "filters": [
+        {
+          "id": "season",
+          "label": "Season",
+          "type": "select",
+          "options": [
+            {
+              "value": "spring/summer",
+              "label": "Spring/Summer"
+            },
+            {
+              "value": "fall/winter",
+              "label": "Fall/Winter"
+            },
+            {
+              "value": "resort",
+              "label": "Resort"
+            },
+            {
+              "value": "pre-fall",
+              "label": "Pre-Fall"
+            }
+          ]
+        },
+        {
+          "id": "era",
+          "label": "Era/Influence",
+          "type": "textarea",
+          "placeholder": "e.g., 1970s disco, futuristic, Gorpcore"
+        },
+        {
+          "id": "look",
+          "label": "Look",
+          "type": "select",
+          "options": [
+            {
+              "value": "editorial",
+              "label": "Editorial"
+            },
+            {
+              "value": "streetwear",
+              "label": "Streetwear"
+            },
+            {
+              "value": "haute couture",
+              "label": "Haute Couture"
+            },
+            {
+              "value": "minimalist",
+              "label": "Minimalist"
+            },
+            {
+              "value": "bohemian",
+              "label": "Bohemian"
+            },
+            {
+              "value": "athleisure",
+              "label": "Athleisure"
+            }
+          ]
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target AI",
+        "options": [
+          {
+            "value": "Midjourney",
+            "label": "Midjourney"
+          },
+          {
+            "value": "DALL-E 3",
+            "label": "DALL-E 3"
+          },
+          {
+            "value": "Leonardo AI",
+            "label": "Leonardo AI"
+          },
+          {
+            "value": "Adobe Firefly",
+            "label": "Adobe Firefly"
+          }
+        ]
+      },
+      "template": "As a fashion director, generate {{numVariations}} high-fashion prompts for {{platform}}.\n\n**Core Idea:** \"{{inputText}}\"\n**Type:** {{subtype}}\n**Look:** {{look}}\n**Season:** {{season}}\n**Influence:** {{era}}\n\nFor each variation, create a complete prompt with these sections:\n- **Concept:** A one-sentence creative vision for the fashion image.\n- **Wardrobe & Styling:** A detailed description of the clothing, accessories, hair, and makeup.\n- **Setting & Environment:** A description of the background and location.\n- **Lighting & Photography:** Specific instructions for lighting (e.g., dramatic studio lighting, golden hour) and camera details.\n- **Model & Pose:** Guidance on the model's expression and pose to convey the desired mood.\n\nFinally, provide 5 relevant fashion tags."
     },
     {
-      "value": "art",
-      "label": "Art style",
-      "description": "Work in the voice of a style or movement.",
-      "guidance": "Write prompts that reproduce a specific artistic style. Name the defining visual motifs, techniques, textures, palette and historical context of the style, and describe how the subject is rendered through it."
+      "id": "art_style",
+      "name": "Art Style",
+      "description": "Explore and generate prompts for specific art styles.",
+      "subtypes": [
+        "Cyberpunk",
+        "Fantasy",
+        "Realism",
+        "Abstract",
+        "3D Render",
+        "Surrealism",
+        "Impressionism",
+        "Minimalism",
+        "Pop Art",
+        "Vaporwave"
+      ],
+      "filters": [
+        {
+          "id": "detail",
+          "label": "Detail Level",
+          "type": "select",
+          "options": [
+            {
+              "value": "minimalist",
+              "label": "Minimalist"
+            },
+            {
+              "value": "highly detailed",
+              "label": "Highly Detailed"
+            },
+            {
+              "value": "intricate",
+              "label": "Intricate"
+            },
+            {
+              "value": "graphic",
+              "label": "Graphic"
+            }
+          ]
+        },
+        {
+          "id": "influences",
+          "label": "Artist Influences",
+          "type": "textarea",
+          "placeholder": "e.g., by H.R. Giger, by Studio Ghibli"
+        }
+      ],
+      "platform": {
+        "id": "platform",
+        "label": "Target AI",
+        "options": [
+          {
+            "value": "Midjourney",
+            "label": "Midjourney"
+          },
+          {
+            "value": "Leonardo AI",
+            "label": "Leonardo AI"
+          },
+          {
+            "value": "Stable Diffusion",
+            "label": "Stable Diffusion"
+          },
+          {
+            "value": "DALL-E 3",
+            "label": "DALL-E 3"
+          },
+          {
+            "value": "NightCafe",
+            "label": "NightCafe"
+          }
+        ]
+      },
+      "template": "As an art historian and prompt engineer, generate {{numVariations}} detailed prompts for {{platform}} to create art in a specific style.\n\n**Subject:** \"{{inputText}}\"\n**Art Style:** {{subtype}}\n**Detail Level:** {{detail}}\n**Influences:** {{influences}}\n\nFor each variation, create a complete prompt with these sections:\n- **Concept:** A one-sentence summary of the artwork's theme.\n- **Composition & Subject:** A detailed description of the main subject and how it is composed within the frame.\n- **Style Execution:** Specific instructions on how to apply the {{subtype}} style, including key visual motifs, techniques, and textures.\n- **Color & Lighting:** Guidance on the color palette and lighting that are characteristic of the chosen style.\n- **Technical Details:** Any relevant camera or rendering parameters to enhance the style.\n\nFinally, provide 5 relevant tags for the art style and subject."
     }
-  ],
-  "platforms": [
-    {
-      "value": "auto",
-      "label": "Any / not sure",
-      "types": [],
-      "guidance": "Write platform-neutral prompts in plain prose that work well in any modern AI tool. Do not use vendor-specific flags or syntax."
-    },
-    {
-      "value": "ChatGPT",
-      "label": "ChatGPT",
-      "types": ["writing", "code", "chat", "business", "marketing", "seo", "education", "productivity"],
-      "guidance": "Conversational model. Favour a clear role assignment, structured markdown instructions and an explicit output format. No special syntax."
-    },
-    {
-      "value": "Gemini",
-      "label": "Gemini",
-      "types": ["writing", "code", "chat", "business", "marketing", "seo", "education", "productivity", "image"],
-      "guidance": "Conversational model with strong multimodal and long-context handling. Favour explicit structure and step-by-step instructions. No special syntax."
-    },
-    {
-      "value": "Claude",
-      "label": "Claude",
-      "types": ["writing", "code", "chat", "business", "education", "productivity"],
-      "guidance": "Conversational model that responds well to XML-style tags for sections, a stated role, and explicit reasoning instructions."
-    },
-    {
-      "value": "Midjourney",
-      "label": "Midjourney",
-      "types": ["image", "portrait", "art", "design"],
-      "guidance": "Image generator. Use dense comma-separated descriptive phrases rather than full sentences, and end with parameters such as --ar 16:9 --style raw --v 6 where appropriate. Avoid negation words; use --no instead."
-    },
-    {
-      "value": "DALL-E 3",
-      "label": "DALL-E 3",
-      "types": ["image", "portrait", "art", "design"],
-      "guidance": "Image generator that prefers natural, descriptive full sentences over keyword soup. No parameter flags. Be explicit about text rendering if text must appear."
-    },
-    {
-      "value": "Stable Diffusion",
-      "label": "Stable Diffusion",
-      "types": ["image", "portrait", "art", "design"],
-      "guidance": "Image generator. Use weighted comma-separated tags, and supply a separate negative prompt listing artefacts to avoid."
-    },
-    {
-      "value": "Flux",
-      "label": "Flux",
-      "types": ["image", "portrait", "art", "design"],
-      "guidance": "Image generator that handles long natural-language descriptions and in-image text well. Write flowing descriptive prose."
-    },
-    {
-      "value": "Leonardo AI",
-      "label": "Leonardo AI",
-      "types": ["image", "portrait", "art", "design"],
-      "guidance": "Image generator. Use descriptive phrases plus explicit style and quality modifiers."
-    },
-    {
-      "value": "Sora",
-      "label": "Sora",
-      "types": ["video"],
-      "guidance": "Video generator. Describe the shot cinematically, including camera movement, subject motion and how the scene evolves across the clip."
-    },
-    {
-      "value": "Veo",
-      "label": "Veo",
-      "types": ["video"],
-      "guidance": "Video generator. Describe the scene, camera work, motion and audio atmosphere in natural prose, and state the duration and aspect ratio."
-    },
-    {
-      "value": "Runway",
-      "label": "Runway",
-      "types": ["video"],
-      "guidance": "Video generator. Keep motion instructions concise and concrete, and specify camera movement explicitly."
-    },
-    {
-      "value": "Kling",
-      "label": "Kling",
-      "types": ["video"],
-      "guidance": "Video generator. Describe subject motion and camera movement separately and keep the scene focused on one continuous action."
-    },
-    {
-      "value": "GitHub Copilot",
-      "label": "GitHub Copilot",
-      "types": ["code"],
-      "guidance": "In-editor coding assistant. Write prompts as precise implementation instructions with file and function context."
-    },
-    {
-      "value": "Cursor",
-      "label": "Cursor",
-      "types": ["code"],
-      "guidance": "Agentic coding editor. Write prompts that state the goal, the files in scope, the constraints and the acceptance criteria."
-    }
-  ],
-  "masterTemplate": "You are the NapNox Master Prompt Engineer. You turn a short idea into polished, ready-to-use prompts for AI systems. You write prompts - you never answer the idea yourself.\n\n=== THE USER'S IDEA ===\n{{inputText}}\n=== END OF IDEA ===\n\nBRIEF\n- Prompt type: {{promptType}}\n- Target AI platform: {{platform}}\n- Detail level: {{detail}}\n- Number of prompts to write: {{numVariations}}\n{{extraContext}}{{imageNote}}\n\nTYPE GUIDANCE\n{{typeGuidance}}\n\nPLATFORM GUIDANCE\n{{platformGuidance}}\n\nDETAIL GUIDANCE\n{{detailGuidance}}\n\nRULES\n1. Write exactly {{numVariations}} prompts. Each must be genuinely different in approach or angle - not the same prompt reworded.\n2. Every prompt must be complete and ready to paste straight into {{platform}} with no editing and no placeholders to fill in.\n3. Never ask the user a question and never explain what you are doing. Output prompts only.\n4. Be concrete. Replace every vague adjective with a specific, sensory or measurable detail.\n5. Preserve the user's intent exactly. Enrich their idea - never substitute a different subject.\n6. If the idea is vague, make confident, sensible creative choices and commit to them rather than hedging.\n7. Use **bold labels** to mark sections inside a prompt when the detail level calls for sections. Never use markdown headings or bullet characters.\n8. Open every prompt with a line that begins with **Concept:** followed by one sentence summarising that variation's angle.\n9. Give each prompt 3 to 5 lowercase tags describing its style, medium and platform.\n\nReturn your answer using the required JSON schema and nothing else."
+  ]
 }

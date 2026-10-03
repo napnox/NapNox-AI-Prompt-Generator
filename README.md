@@ -4,9 +4,15 @@
 
 # NapNox AI Prompt Generator
 
-One master prompt generator. A member describes their idea in plain language and
-gets back several polished, ready-to-paste prompts for any AI tool — images,
-video, writing, code, marketing and more.
+One master prompt generator covering all 14 categories. A member describes
+their idea in plain language, optionally picks a category, and gets back
+several polished, ready-to-paste prompts for any AI tool.
+
+It is a **single generator**, not 14 separate ones: pick a category from the
+dropdown and the form swaps in that category's own subtypes, filters and
+target platforms. Every original category, subtype, filter and prompt template
+is preserved verbatim. Leave it on **Auto-detect** and the master template
+works out the medium for you.
 
 Built to embed in WordPress, where **your registered users are the accounts**:
 only logged-in members can generate, each gets **10 free generations** counted
@@ -19,6 +25,7 @@ access.
 
 | | |
 |---|---|
+| **Categories** | All 14 originals, with every subtype, filter and prompt template, inside one generator. |
 | **Who can generate** | Logged-in WordPress users only. Signed-out visitors see a sign-in gate. |
 | **Free allowance** | 10 generations per account (configurable in wp-admin). |
 | **Where the count lives** | WordPress user meta — not a cookie or localStorage, so clearing the browser, switching device or using private browsing does **not** reset it. |
@@ -130,10 +137,11 @@ returning canned prompts. Useful query flags: `?loggedout=1`, `?used=10`,
 ## Project layout
 
 ```
-shared/master-config.json   The master prompt template, prompt types,
-                            platforms, detail levels and limits.
-                            Read by BOTH the React client and the PHP
-                            backend, so the two can never drift apart.
+shared/master-config.json   All 14 categories with their subtypes, filters,
+                            platform options and original prompt templates,
+                            plus the auto-detect master template, detail
+                            levels and limits. Read by BOTH the React client
+                            and the PHP backend, so the two cannot drift.
 
 masterConfig.ts             Typed accessor for that JSON (client).
 App.tsx                     Session gate -> master form -> results.
@@ -153,8 +161,10 @@ wordpress-plugin/           The production backend: shortcode, REST routes,
   browser. Verify with `grep -r "AIzaSy" wordpress-plugin/*/assets/` — it should
   return nothing.
 - `/wp-json/napnox/v1/generate` requires `is_user_logged_in()` and validates
-  every field against `shared/master-config.json` before spending a token, so it
-  cannot be used as an open proxy to your Gemini quota.
+  every field against `shared/master-config.json` before spending a token —
+  category, subtype, target platform and each filter value must match the
+  original definitions — so it cannot be used as an open proxy to your Gemini
+  quota.
 - Requests are throttled to one generation every 3 seconds per user, and the
   quota is only charged on a **successful** generation.
 - Upstream failures are logged server-side (with `WP_DEBUG` on) but the browser

@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from '@google/genai';
-import { MASTER_CONFIG } from '../masterConfig';
+import { AUTO, AUTO_ID, DEFAULTS, MASTER_CONFIG, findCategory, type Filter } from '../masterConfig';
 
 /**
  * Server-side helpers shared by the dev API routes.
@@ -9,7 +9,7 @@ import { MASTER_CONFIG } from '../masterConfig';
  * `shared/master-config.json`. Keep the two in step.
  */
 
-const { defaults, promptTypes, platforms, detailLevels, masterTemplate, model } = MASTER_CONFIG;
+const { detailLevels, masterTemplate, model } = MASTER_CONFIG;
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const REQUEST_TIMEOUT_MS = 60_000;
@@ -27,7 +27,7 @@ export const fail = (message: string, status: number, code?: string): Response =
   json({ error: { message, code: code ?? String(status) } }, status);
 
 /** Literal, single-pass replacement so user text can never inject a placeholder. */
-export function renderTemplate(template: string, data: Record<string, string | number>): string {
+export function renderTemplate(template: string, data: Record<string, string | number | boolean>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>
     Object.prototype.hasOwnProperty.call(data, key) ? String(data[key]) : match,
   );
@@ -35,8 +35,11 @@ export function renderTemplate(template: string, data: Record<string, string | n
 
 export interface ValidatedInput {
   idea: string;
-  promptType: string;
+  categoryId: string;
+  subtype: string;
   platform: string;
+  platformLabel: string;
+  filters: Record<string, string | boolean>;
   detail: string;
   numVariations: number;
   context: string;
@@ -51,28 +54,76 @@ function str(value: unknown, field: string, max: number): string {
   return trimmed;
 }
 
+/**
+ * Validate one of a category's own filters against its original definition.
+ * Omitted values fall back to the filter's default rather than erroring.
+ */
+function validateFilter(filter: Filter, raw: unknown): string | boolean {
+  switch (filter.type) {
+    case 'select': {
+      const options = filter.options ?? [];
+      const allowed = options.map((option) => option.value);
+      if (raw === undefined || raw === null || raw === '') {
+        const preset = filter.defaultValue;
+        return typeof preset === 'string' && allowed.includes(preset) ? preset : (options[0]?.value ?? '');
+      }
+      if (typeof raw !== 'string' || !allowed.includes(raw)) {
+        throw new BadRequest(`Invalid value for "${filter.label}".`);
+      }
+      return raw;
+    }
+    case 'toggle':
+      return raw === undefined ? Boolean(filter.defaultValue) : Boolean(raw);
+    case 'textarea':
+      return str(raw, filter.label, DEFAULTS.maxContextChars);
+    case 'file':
+    default:
+      return '';
+  }
+}
+
 export function validateInput(body: any): ValidatedInput {
   if (!body || typeof body !== 'object') throw new BadRequest('Request body must be a JSON object.');
 
-  const idea = str(body.idea, 'Your idea', defaults.maxInputChars);
+  const idea = str(body.idea, 'Your idea', DEFAULTS.maxInputChars);
   if (idea.length < 3) throw new BadRequest('Describe what you want a prompt for (at least 3 characters).');
 
-  const promptType = str(body.promptType, 'promptType', 60) || 'auto';
-  if (!promptTypes.some((t) => t.value === promptType)) throw new BadRequest('Unknown prompt type.');
+  const categoryId = str(body.category, 'category', 60) || AUTO_ID;
+  const category = categoryId === AUTO_ID ? undefined : findCategory(categoryId);
+  if (categoryId !== AUTO_ID && !category) throw new BadRequest('Unknown category.');
 
-  const platform = str(body.platform, 'platform', 60) || 'auto';
-  if (!platforms.some((p) => p.value === platform)) throw new BadRequest('Unknown platform.');
+  // Subtype and platform must come from the selected category's own lists.
+  let subtype = '';
+  if (category) {
+    subtype = str(body.subtype, 'subtype', 120) || category.subtypes[0];
+    if (!category.subtypes.includes(subtype)) throw new BadRequest('Unknown type for this category.');
+  }
+
+  const platformOptions = category
+    ? category.platform.options
+    : AUTO.platforms.map((platform) => ({ value: platform.value, label: platform.label }));
+  const platform = str(body.platform, 'platform', 120) || platformOptions[0]?.value || 'auto';
+  const platformMatch = platformOptions.find((option) => option.value === platform);
+  if (!platformMatch) throw new BadRequest('Unknown platform for this category.');
+
+  const filters: Record<string, string | boolean> = {};
+  if (category) {
+    const raw = (body.filters ?? {}) as Record<string, unknown>;
+    for (const filter of category.filters) {
+      filters[filter.id] = validateFilter(filter, raw[filter.id]);
+    }
+  }
 
   const detail = str(body.detail, 'detail', 60) || 'balanced';
-  if (!detailLevels.some((d) => d.value === detail)) throw new BadRequest('Unknown detail level.');
+  if (!detailLevels.some((level) => level.value === detail)) throw new BadRequest('Unknown detail level.');
 
-  const requested = Number.parseInt(String(body.numVariations ?? defaults.numVariations), 10);
+  const requested = Number.parseInt(String(body.numVariations ?? DEFAULTS.numVariations), 10);
   const numVariations = Math.min(
-    defaults.maxVariations,
-    Math.max(1, Number.isFinite(requested) ? requested : defaults.numVariations),
+    DEFAULTS.maxVariations,
+    Math.max(1, Number.isFinite(requested) ? requested : DEFAULTS.numVariations),
   );
 
-  const context = str(body.context, 'Extra context', defaults.maxContextChars);
+  const context = str(body.context, 'Extra context', DEFAULTS.maxContextChars);
 
   let image: ValidatedInput['image'];
   if (body.image) {
@@ -83,35 +134,79 @@ export function validateInput(body: any): ValidatedInput {
     if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
       throw new BadRequest('Unsupported image type. Use JPG, PNG or WebP.');
     }
-    if ((base64.length * 3) / 4 > defaults.maxImageBytes) {
+    if ((base64.length * 3) / 4 > DEFAULTS.maxImageBytes) {
       throw new BadRequest('Image is too large. The maximum size is 4MB.');
     }
     if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64)) throw new BadRequest('Malformed image upload.');
     image = { base64, mimeType };
   }
 
-  return { idea, promptType, platform, detail, numVariations, context, image };
+  return {
+    idea,
+    categoryId,
+    subtype,
+    platform,
+    platformLabel: platformMatch.label,
+    filters,
+    detail,
+    numVariations,
+    context,
+    image,
+  };
 }
 
+/**
+ * Compose the prompt sent to Gemini.
+ *
+ * A chosen category uses its own original template (so all the existing
+ * prompt engineering is preserved verbatim); "Auto-detect" uses the master
+ * template. Detail level, extra context and any reference image are appended
+ * as additional requirements in both cases.
+ */
 export function buildMasterPrompt(input: ValidatedInput): string {
-  const type = promptTypes.find((t) => t.value === input.promptType)!;
-  const platform = platforms.find((p) => p.value === input.platform)!;
-  const detail = detailLevels.find((d) => d.value === input.detail)!;
+  const detail = detailLevels.find((level) => level.value === input.detail)!;
+  const category = findCategory(input.categoryId);
 
-  return renderTemplate(masterTemplate, {
-    inputText: input.idea,
-    promptType: type.label,
-    platform: platform.value === 'auto' ? 'any modern AI tool' : platform.label,
-    detail: detail.label,
-    numVariations: input.numVariations,
-    typeGuidance: type.guidance,
-    platformGuidance: platform.guidance,
-    detailGuidance: detail.guidance,
-    extraContext: input.context ? `- Extra context from the user: ${input.context}\n` : '',
-    imageNote: input.image
-      ? '- A reference image is attached. Study it and ground every prompt in what it actually shows.\n'
-      : '',
-  });
+  let composed: string;
+
+  if (category) {
+    composed = renderTemplate(category.template, {
+      ...input.filters,
+      numVariations: input.numVariations,
+      platform: input.platformLabel,
+      subtype: input.subtype,
+      inputText: input.idea,
+    });
+  } else {
+    const platform = AUTO.platforms.find((option) => option.value === input.platform);
+    composed = renderTemplate(masterTemplate, {
+      inputText: input.idea,
+      promptType: AUTO.label,
+      platform: input.platform === 'auto' ? 'any modern AI tool' : input.platformLabel,
+      detail: detail.label,
+      numVariations: input.numVariations,
+      typeGuidance: AUTO.guidance,
+      platformGuidance: platform?.guidance ?? '',
+      detailGuidance: detail.guidance,
+      extraContext: input.context ? `- Extra context from the user: ${input.context}\n` : '',
+      imageNote: input.image
+        ? '- A reference image is attached. Study it and ground every prompt in what it actually shows.\n'
+        : '',
+    });
+  }
+
+  const extras: string[] = [];
+  if (category) extras.push(detail.guidance);
+  if (category && input.context) extras.push(`Extra context from the user: ${input.context}`);
+  if (category && input.image) {
+    extras.push('A reference image is attached. Study it and ground every prompt in what it actually shows.');
+  }
+
+  if (extras.length > 0) {
+    composed += `\n\nADDITIONAL REQUIREMENTS\n${extras.map((line) => `- ${line}`).join('\n')}`;
+  }
+
+  return composed;
 }
 
 const RESPONSE_SCHEMA = {
@@ -162,7 +257,11 @@ const isRetryable = (error: unknown): boolean => {
  * Transient overload is the single most common cause of a failed generation,
  * so retrying here is what makes the feature feel reliable.
  */
-export async function callGemini(apiKey: string, composedPrompt: string, image?: { base64: string; mimeType: string }): Promise<UpstreamResult> {
+export async function callGemini(
+  apiKey: string,
+  composedPrompt: string,
+  image?: { base64: string; mimeType: string },
+): Promise<UpstreamResult> {
   const ai = new GoogleGenAI({ apiKey });
 
   const contents = image

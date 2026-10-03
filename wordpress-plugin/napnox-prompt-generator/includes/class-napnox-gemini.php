@@ -50,7 +50,8 @@ class NapNox_Gemini {
 	/**
 	 * Validate and normalise the request payload.
 	 *
-	 * Everything is checked against the shared master config, so the endpoint
+	 * Everything is checked against the shared master config - including each
+	 * category's own subtypes, filters and platform options - so the endpoint
 	 * cannot be repurposed as a general-purpose proxy to your Gemini quota.
 	 *
 	 * @param array $body Raw request body.
@@ -78,16 +79,59 @@ class NapNox_Gemini {
 			);
 		}
 
-		$prompt_type = isset( $body['promptType'] ) ? sanitize_text_field( (string) $body['promptType'] ) : 'auto';
-		$type        = NapNox_Config::find( 'promptTypes', $prompt_type );
-		if ( ! $type ) {
-			return new WP_Error( 'invalid_input', __( 'Unknown prompt type.', 'napnox-prompts' ), array( 'status' => 400 ) );
+		$category_id = isset( $body['category'] ) ? sanitize_text_field( (string) $body['category'] ) : 'auto';
+		$category    = 'auto' === $category_id ? null : NapNox_Config::category( $category_id );
+		if ( 'auto' !== $category_id && ! $category ) {
+			return new WP_Error( 'invalid_input', __( 'Unknown category.', 'napnox-prompts' ), array( 'status' => 400 ) );
 		}
 
-		$platform_value = isset( $body['platform'] ) ? sanitize_text_field( (string) $body['platform'] ) : 'auto';
-		$platform       = NapNox_Config::find( 'platforms', $platform_value );
+		// Subtype must come from the selected category's own list.
+		$subtype = '';
+		if ( $category ) {
+			$subtype = isset( $body['subtype'] ) ? sanitize_text_field( (string) $body['subtype'] ) : '';
+			if ( '' === $subtype ) {
+				$subtype = isset( $category['subtypes'][0] ) ? $category['subtypes'][0] : '';
+			}
+			if ( ! in_array( $subtype, (array) $category['subtypes'], true ) ) {
+				return new WP_Error( 'invalid_input', __( 'Unknown type for this category.', 'napnox-prompts' ), array( 'status' => 400 ) );
+			}
+		}
+
+		// Platform must come from the category's own options, or the auto list.
+		if ( $category ) {
+			$platform_options = (array) $category['platform']['options'];
+		} else {
+			$auto             = NapNox_Config::auto();
+			$platform_options = isset( $auto['platforms'] ) ? (array) $auto['platforms'] : array();
+		}
+
+		$platform_value = isset( $body['platform'] ) ? sanitize_text_field( (string) $body['platform'] ) : '';
+		if ( '' === $platform_value ) {
+			$platform_value = isset( $platform_options[0]['value'] ) ? $platform_options[0]['value'] : 'auto';
+		}
+
+		$platform = null;
+		foreach ( $platform_options as $option ) {
+			if ( isset( $option['value'] ) && $option['value'] === $platform_value ) {
+				$platform = $option;
+				break;
+			}
+		}
 		if ( ! $platform ) {
-			return new WP_Error( 'invalid_input', __( 'Unknown platform.', 'napnox-prompts' ), array( 'status' => 400 ) );
+			return new WP_Error( 'invalid_input', __( 'Unknown platform for this category.', 'napnox-prompts' ), array( 'status' => 400 ) );
+		}
+
+		// Each of the category's own filters, validated against its definition.
+		$filters = array();
+		if ( $category ) {
+			$raw = isset( $body['filters'] ) && is_array( $body['filters'] ) ? $body['filters'] : array();
+			foreach ( (array) $category['filters'] as $filter ) {
+				$value = self::validate_filter( $filter, isset( $raw[ $filter['id'] ] ) ? $raw[ $filter['id'] ] : null, $max_context );
+				if ( is_wp_error( $value ) ) {
+					return $value;
+				}
+				$filters[ $filter['id'] ] = $value;
+			}
 		}
 
 		$detail_value = isset( $body['detail'] ) ? sanitize_text_field( (string) $body['detail'] ) : 'balanced';
@@ -126,8 +170,10 @@ class NapNox_Gemini {
 
 		return array(
 			'idea'          => $idea,
-			'type'          => $type,
+			'category'      => $category,
+			'subtype'       => $subtype,
 			'platform'      => $platform,
+			'filters'       => $filters,
 			'detail'        => $detail,
 			'numVariations' => $num,
 			'context'       => $context,
@@ -136,26 +182,124 @@ class NapNox_Gemini {
 	}
 
 	/**
-	 * Render the master template for a validated request.
+	 * Validate a single category filter against its original definition.
+	 *
+	 * Omitted values fall back to the filter's default rather than failing.
+	 *
+	 * @param array $filter      Filter definition.
+	 * @param mixed $raw         Submitted value.
+	 * @param int   $max_context Maximum textarea length.
+	 * @return string|bool|WP_Error
+	 */
+	private static function validate_filter( $filter, $raw, $max_context ) {
+		$type = isset( $filter['type'] ) ? $filter['type'] : 'select';
+
+		if ( 'toggle' === $type ) {
+			if ( null === $raw ) {
+				return ! empty( $filter['defaultValue'] );
+			}
+			return (bool) $raw;
+		}
+
+		if ( 'textarea' === $type ) {
+			$value = null === $raw ? '' : trim( wp_strip_all_tags( (string) $raw ) );
+			if ( self::length( $value ) > $max_context ) {
+				$value = self::cut( $value, 0, $max_context );
+			}
+			return $value;
+		}
+
+		if ( 'file' === $type ) {
+			return '';
+		}
+
+		$options = isset( $filter['options'] ) ? (array) $filter['options'] : array();
+		$allowed = array();
+		foreach ( $options as $option ) {
+			if ( isset( $option['value'] ) ) {
+				$allowed[] = $option['value'];
+			}
+		}
+
+		if ( null === $raw || '' === $raw ) {
+			$preset = isset( $filter['defaultValue'] ) ? $filter['defaultValue'] : null;
+			if ( is_string( $preset ) && in_array( $preset, $allowed, true ) ) {
+				return $preset;
+			}
+			return isset( $allowed[0] ) ? $allowed[0] : '';
+		}
+
+		$value = sanitize_text_field( (string) $raw );
+		if ( ! in_array( $value, $allowed, true ) ) {
+			return new WP_Error(
+				'invalid_input',
+				sprintf(
+					/* translators: %s: filter label */
+					__( 'Invalid value for "%s".', 'napnox-prompts' ),
+					isset( $filter['label'] ) ? $filter['label'] : $filter['id']
+				),
+				array( 'status' => 400 )
+			);
+		}
+		return $value;
+	}
+
+	/**
+	 * Compose the prompt sent to Gemini.
+	 *
+	 * A chosen category uses its own original template, so all the existing
+	 * prompt engineering is preserved verbatim. "Auto-detect" uses the master
+	 * template. Detail level, extra context and any reference image are
+	 * appended as additional requirements in both cases.
 	 *
 	 * @param array $input Validated input from self::validate().
 	 * @return string
 	 */
 	public static function build_prompt( $input ) {
+		$category = $input['category'];
+		$detail   = $input['detail'];
+
+		if ( $category ) {
+			$replacements = array(
+				'{{numVariations}}' => (string) $input['numVariations'],
+				'{{platform}}'      => $input['platform']['label'],
+				'{{subtype}}'       => $input['subtype'],
+				'{{inputText}}'     => $input['idea'],
+			);
+			foreach ( $input['filters'] as $id => $value ) {
+				if ( is_bool( $value ) ) {
+					$value = $value ? 'true' : 'false';
+				}
+				$replacements[ '{{' . $id . '}}' ] = (string) $value;
+			}
+			$composed = str_replace( array_keys( $replacements ), array_values( $replacements ), (string) $category['template'] );
+
+			$extras = array( $detail['guidance'] );
+			if ( '' !== $input['context'] ) {
+				$extras[] = 'Extra context from the user: ' . $input['context'];
+			}
+			if ( $input['image'] ) {
+				$extras[] = 'A reference image is attached. Study it and ground every prompt in what it actually shows.';
+			}
+
+			return $composed . "\n\nADDITIONAL REQUIREMENTS\n- " . implode( "\n- ", $extras );
+		}
+
 		$master   = NapNox_Config::master();
+		$auto     = NapNox_Config::auto();
 		$template = isset( $master['masterTemplate'] ) ? (string) $master['masterTemplate'] : '';
 
 		$replacements = array(
-			'{{inputText}}'       => $input['idea'],
-			'{{promptType}}'      => $input['type']['label'],
-			'{{platform}}'        => 'auto' === $input['platform']['value'] ? 'any modern AI tool' : $input['platform']['label'],
-			'{{detail}}'          => $input['detail']['label'],
-			'{{numVariations}}'   => (string) $input['numVariations'],
-			'{{typeGuidance}}'    => $input['type']['guidance'],
-			'{{platformGuidance}}' => $input['platform']['guidance'],
-			'{{detailGuidance}}'  => $input['detail']['guidance'],
-			'{{extraContext}}'    => '' !== $input['context'] ? '- Extra context from the user: ' . $input['context'] . "\n" : '',
-			'{{imageNote}}'       => $input['image'] ? "- A reference image is attached. Study it and ground every prompt in what it actually shows.\n" : '',
+			'{{inputText}}'        => $input['idea'],
+			'{{promptType}}'       => isset( $auto['label'] ) ? $auto['label'] : 'Auto-detect',
+			'{{platform}}'         => 'auto' === $input['platform']['value'] ? 'any modern AI tool' : $input['platform']['label'],
+			'{{detail}}'           => $detail['label'],
+			'{{numVariations}}'    => (string) $input['numVariations'],
+			'{{typeGuidance}}'     => isset( $auto['guidance'] ) ? $auto['guidance'] : '',
+			'{{platformGuidance}}' => isset( $input['platform']['guidance'] ) ? $input['platform']['guidance'] : '',
+			'{{detailGuidance}}'   => $detail['guidance'],
+			'{{extraContext}}'     => '' !== $input['context'] ? '- Extra context from the user: ' . $input['context'] . "\n" : '',
+			'{{imageNote}}'        => $input['image'] ? "- A reference image is attached. Study it and ground every prompt in what it actually shows.\n" : '',
 		);
 
 		return str_replace( array_keys( $replacements ), array_values( $replacements ), $template );

@@ -1,13 +1,17 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AUTO_ID,
   DEFAULTS,
   DETAIL_LEVELS,
-  PROMPT_TYPES,
-  findPromptType,
-  platformsForType,
+  categoryOptions,
+  defaultForFilter,
+  findCategory,
+  platformOptionsFor,
+  type Filter,
 } from '../masterConfig';
 import type { GenerateRequest, Usage } from '../types';
 import { SparkleIcon } from './icons/ActionIcons';
+import { CATEGORY_ICONS } from './icons/categoryIconMap';
 import { Tooltip } from './Tooltip';
 
 interface MasterPromptFormProps {
@@ -28,10 +32,21 @@ const controlClass =
   'w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 ' +
   'focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition';
 
+/** Initial values for a category's own filters. */
+const initialFilterState = (filters: Filter[]): Record<string, string | boolean> => {
+  const state: Record<string, string | boolean> = {};
+  for (const filter of filters) {
+    if (filter.type !== 'file') state[filter.id] = defaultForFilter(filter);
+  }
+  return state;
+};
+
 export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, isLoading, usage }) => {
   const [idea, setIdea] = useState('');
-  const [promptType, setPromptType] = useState('auto');
+  const [categoryId, setCategoryId] = useState(AUTO_ID);
+  const [subtype, setSubtype] = useState('');
   const [platform, setPlatform] = useState('auto');
+  const [filters, setFilters] = useState<Record<string, string | boolean>>({});
   const [detail, setDetail] = useState('balanced');
   const [numVariations, setNumVariations] = useState(DEFAULTS.numVariations);
   const [context, setContext] = useState('');
@@ -40,14 +55,25 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const availablePlatforms = useMemo(() => platformsForType(promptType), [promptType]);
-  const typeInfo = findPromptType(promptType);
+  const category = useMemo(() => findCategory(categoryId), [categoryId]);
+  const platforms = useMemo(() => platformOptionsFor(categoryId), [categoryId]);
+  const options = useMemo(() => categoryOptions(), []);
+  const Icon = CATEGORY_ICONS[categoryId];
 
-  // Keep the platform valid when the type changes.
-  const handleTypeChange = (value: string) => {
-    setPromptType(value);
-    if (!platformsForType(value).some((p) => p.value === platform)) setPlatform('auto');
-  };
+  // Categories such as the Portrait Transformer declare their own file input;
+  // when present it drives the reference image instead of the optional one.
+  const fileFilter = category?.filters.find((filter) => filter.type === 'file');
+  const visibleFilters = category?.filters.filter((filter) => filter.type !== 'file') ?? [];
+
+  // Switching category swaps in that category's own subtypes, filters and platforms.
+  useEffect(() => {
+    setSubtype(category?.subtypes[0] ?? '');
+    setFilters(category ? initialFilterState(category.filters) : {});
+    setPlatform(platformOptionsFor(categoryId)[0]?.value ?? 'auto');
+  }, [categoryId, category]);
+
+  const setFilter = (id: string, value: string | boolean) =>
+    setFilters((current) => ({ ...current, [id]: value }));
 
   const handleFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setFileError(null);
@@ -66,12 +92,12 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
       event.target.value = '';
       return;
     }
-    const base64 = await new Promise<string>((resolve, reject) => {
+    const base64 = await new Promise<string | null>((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
-      reader.onerror = () => reject(reader.error);
+      reader.onerror = () => resolve(null);
       reader.readAsDataURL(file);
-    }).catch(() => null);
+    });
 
     if (!base64) {
       setFileError('Could not read that file. Try another image.');
@@ -95,8 +121,10 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
     if (!canSubmit) return;
     onGenerate({
       idea: trimmedIdea,
-      promptType,
+      category: categoryId,
+      subtype: subtype || undefined,
       platform,
+      filters: Object.keys(filters).length > 0 ? filters : undefined,
       detail,
       numVariations,
       context: context.trim() || undefined,
@@ -104,7 +132,6 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
     });
   };
 
-  // Ctrl/Cmd + Enter submits from the textarea.
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && canSubmit) {
       event.preventDefault();
@@ -112,24 +139,112 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
     }
   };
 
+  /** Render one of the category's own filters, honouring its original type. */
+  const renderFilter = (filter: Filter) => {
+    const id = `napnox-filter-${filter.id}`;
+    const value = filters[filter.id];
+
+    if (filter.type === 'toggle') {
+      return (
+        <label key={filter.id} htmlFor={id} className="flex items-center gap-2.5 cursor-pointer sm:col-span-2">
+          <input
+            id={id}
+            type="checkbox"
+            checked={Boolean(value)}
+            onChange={(event) => setFilter(filter.id, event.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-400"
+          />
+          <span className="text-sm font-semibold text-gray-700">{filter.label}</span>
+        </label>
+      );
+    }
+
+    if (filter.type === 'textarea') {
+      return (
+        <div key={filter.id} className="sm:col-span-2">
+          <label htmlFor={id} className={labelClass}>
+            {filter.label}
+          </label>
+          <textarea
+            id={id}
+            rows={2}
+            value={String(value ?? '')}
+            placeholder={filter.placeholder}
+            maxLength={DEFAULTS.maxContextChars}
+            onChange={(event) => setFilter(filter.id, event.target.value)}
+            className={`${controlClass} resize-y`}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div key={filter.id}>
+        <label htmlFor={id} className={labelClass}>
+          {filter.label}
+        </label>
+        <select
+          id={id}
+          value={String(value ?? '')}
+          onChange={(event) => setFilter(filter.id, event.target.value)}
+          className={controlClass}
+        >
+          {(filter.options ?? []).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
+  const imageUpload = (label: string, hint: string) => (
+    <div>
+      <label htmlFor="napnox-image" className={labelClass}>
+        {label}
+      </label>
+      {image ? (
+        <div className="flex items-center justify-between gap-3 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
+          <span className="text-sm text-emerald-800 truncate">{image.name}</span>
+          <button
+            type="button"
+            onClick={clearImage}
+            className="text-sm font-semibold text-emerald-700 hover:text-emerald-900 shrink-0"
+          >
+            Remove
+          </button>
+        </div>
+      ) : (
+        <input
+          ref={fileInputRef}
+          id="napnox-image"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleFile}
+          className={controlClass}
+        />
+      )}
+      {fileError && <p className="mt-1 text-xs text-red-600">{fileError}</p>}
+      <p className="mt-1 text-xs text-gray-500">{hint}</p>
+    </div>
+  );
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 space-y-5"
-    >
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 space-y-5">
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
           <label htmlFor="napnox-idea" className="text-sm font-semibold text-gray-700">
             What do you want a prompt for?
           </label>
-          <span className={`text-xs ${trimmedIdea.length > DEFAULTS.maxInputChars ? 'text-red-600' : 'text-gray-400'}`}>
+          <span className="text-xs text-gray-400">
             {trimmedIdea.length}/{DEFAULTS.maxInputChars}
           </span>
         </div>
         <textarea
           id="napnox-idea"
           value={idea}
-          onChange={(e) => setIdea(e.target.value)}
+          onChange={(event) => setIdea(event.target.value)}
           onKeyDown={handleKeyDown}
           rows={4}
           maxLength={DEFAULTS.maxInputChars}
@@ -154,46 +269,105 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="napnox-type" className={labelClass}>
-            Prompt type
+          <label htmlFor="napnox-category" className={labelClass}>
+            Category
           </label>
-          <select
-            id="napnox-type"
-            value={promptType}
-            onChange={(e) => handleTypeChange(e.target.value)}
-            className={controlClass}
-          >
-            {PROMPT_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>
-                {type.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            {Icon && (
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none">
+                <Icon className="h-5 w-5" />
+              </span>
+            )}
+            <select
+              id="napnox-category"
+              value={categoryId}
+              onChange={(event) => setCategoryId(event.target.value)}
+              className={`${controlClass} ${Icon ? 'pl-10' : ''}`}
+            >
+              {options.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div>
-          <label htmlFor="napnox-platform" className={labelClass}>
-            Target AI
-          </label>
-          <select
-            id="napnox-platform"
-            value={platform}
-            onChange={(e) => setPlatform(e.target.value)}
-            className={controlClass}
-          >
-            {availablePlatforms.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+
+        {category ? (
+          <div>
+            <label htmlFor="napnox-subtype" className={labelClass}>
+              Type
+            </label>
+            <select
+              id="napnox-subtype"
+              value={subtype}
+              onChange={(event) => setSubtype(event.target.value)}
+              className={controlClass}
+            >
+              {category.subtypes.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label htmlFor="napnox-platform-auto" className={labelClass}>
+              Target AI
+            </label>
+            <select
+              id="napnox-platform-auto"
+              value={platform}
+              onChange={(event) => setPlatform(event.target.value)}
+              className={controlClass}
+            >
+              {platforms.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
-      {typeInfo && <p className="-mt-2 text-xs text-gray-500">{typeInfo.description}</p>}
+      <p className="-mt-2 text-xs text-gray-500">
+        {category ? category.description : 'Let the AI work out which kind of prompt fits your idea.'}
+      </p>
+
+      {/* The selected category's own filters, exactly as originally defined. */}
+      {category && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+          <div>
+            <label htmlFor="napnox-platform" className={labelClass}>
+              {category.platform.label}
+            </label>
+            <select
+              id="napnox-platform"
+              value={platform}
+              onChange={(event) => setPlatform(event.target.value)}
+              className={controlClass}
+            >
+              {platforms.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          {visibleFilters.map(renderFilter)}
+          {fileFilter && (
+            <div className="sm:col-span-2">
+              {imageUpload(fileFilter.label, 'JPG, PNG or WebP, up to 4MB.')}
+            </div>
+          )}
+        </div>
+      )}
 
       <button
         type="button"
-        onClick={() => setShowAdvanced((v) => !v)}
+        onClick={() => setShowAdvanced((value) => !value)}
         className="text-sm font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1"
       >
         <span className={`transition-transform duration-200 ${showAdvanced ? 'rotate-90' : ''}`}>›</span>
@@ -210,7 +384,7 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
               <select
                 id="napnox-detail"
                 value={detail}
-                onChange={(e) => setDetail(e.target.value)}
+                onChange={(event) => setDetail(event.target.value)}
                 className={controlClass}
               >
                 {DETAIL_LEVELS.map((level) => (
@@ -227,7 +401,7 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
               <select
                 id="napnox-count"
                 value={numVariations}
-                onChange={(e) => setNumVariations(Number(e.target.value))}
+                onChange={(event) => setNumVariations(Number(event.target.value))}
                 className={controlClass}
               >
                 {Array.from({ length: DEFAULTS.maxVariations }, (_, i) => i + 1).map((n) => (
@@ -246,7 +420,7 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
             <textarea
               id="napnox-context"
               value={context}
-              onChange={(e) => setContext(e.target.value)}
+              onChange={(event) => setContext(event.target.value)}
               rows={2}
               maxLength={DEFAULTS.maxContextChars}
               placeholder="Brand voice, audience, things to avoid..."
@@ -254,34 +428,7 @@ export const MasterPromptForm: React.FC<MasterPromptFormProps> = ({ onGenerate, 
             />
           </div>
 
-          <div>
-            <label htmlFor="napnox-image" className={labelClass}>
-              Reference image <span className="font-normal text-gray-400">(optional)</span>
-            </label>
-            {image ? (
-              <div className="flex items-center justify-between gap-3 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <span className="text-sm text-emerald-800 truncate">{image.name}</span>
-                <button
-                  type="button"
-                  onClick={clearImage}
-                  className="text-sm font-semibold text-emerald-700 hover:text-emerald-900 shrink-0"
-                >
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <input
-                ref={fileInputRef}
-                id="napnox-image"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleFile}
-                className={controlClass}
-              />
-            )}
-            {fileError && <p className="mt-1 text-xs text-red-600">{fileError}</p>}
-            <p className="mt-1 text-xs text-gray-500">JPG, PNG or WebP, up to 4MB.</p>
-          </div>
+          {!fileFilter && imageUpload('Reference image (optional)', 'JPG, PNG or WebP, up to 4MB.')}
         </div>
       )}
 

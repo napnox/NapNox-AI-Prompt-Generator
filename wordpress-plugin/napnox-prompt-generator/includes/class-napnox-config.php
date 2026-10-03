@@ -110,7 +110,7 @@ class NapNox_Config {
 	/**
 	 * Look up an entry by its "value" key in one of the master config lists.
 	 *
-	 * @param string $list  List name: promptTypes, platforms or detailLevels.
+	 * @param string $list  List name, e.g. detailLevels.
 	 * @param string $value Value to find.
 	 * @return array|null
 	 */
@@ -125,6 +125,36 @@ class NapNox_Config {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * A category definition by id, with all its original subtypes, filters,
+	 * platform options and prompt template.
+	 *
+	 * @param string $id Category id.
+	 * @return array|null
+	 */
+	public static function category( $id ) {
+		$master = self::master();
+		if ( empty( $master['categories'] ) || ! is_array( $master['categories'] ) ) {
+			return null;
+		}
+		foreach ( $master['categories'] as $category ) {
+			if ( isset( $category['id'] ) && $category['id'] === $id ) {
+				return $category;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The "Auto-detect" mode definition.
+	 *
+	 * @return array
+	 */
+	public static function auto() {
+		$master = self::master();
+		return isset( $master['auto'] ) && is_array( $master['auto'] ) ? $master['auto'] : array();
 	}
 
 	/**

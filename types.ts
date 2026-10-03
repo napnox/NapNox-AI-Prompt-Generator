@@ -1,7 +1,11 @@
 export interface GenerateRequest {
   idea: string;
-  promptType: string;
+  /** Category id, or 'auto' for the master auto-detect mode. */
+  category: string;
+  subtype?: string;
   platform: string;
+  /** Values for the selected category's own filters, keyed by filter id. */
+  filters?: Record<string, string | boolean>;
   detail: string;
   numVariations: number;
   context?: string;
