@@ -1,21 +1,5 @@
 
 import type { Category } from './types';
-import {
-  ImageIcon,
-  WritingIcon,
-  CodeIcon,
-  VideoIcon,
-  ChatIcon,
-  BusinessIcon,
-  PortraitIcon,
-  EducationIcon,
-  ProductivityIcon,
-  SeoIcon,
-  DesignIcon,
-  SocialMediaIcon,
-  FashionIcon,
-  ArtStyleIcon,
-} from './components/icons/CategoryIcons';
 
 export const PREDEFINED_CATEGORIES = {
   IMAGE: 'image',
@@ -39,7 +23,6 @@ export const CATEGORIES: Category[] = [
     id: PREDEFINED_CATEGORIES.IMAGE,
     name: 'Image',
     description: 'Create detailed prompts for image generation AIs.',
-    icon: ImageIcon,
     subtypes: ['Photorealistic', 'Digital Art', 'Illustration', '3D Render', 'Logo', 'Concept Art', 'Architectural Viz', 'Character Design'],
     filters: [
       { id: 'style', label: 'Art Style', type: 'select', options: [
@@ -98,7 +81,6 @@ Finally, provide 5 relevant, SEO-friendly tags for the generated image.`,
     id: PREDEFINED_CATEGORIES.PORTRAIT_TRANSFORMER,
     name: 'Portrait Transformer',
     description: 'Upload a photo and generate prompts to transform into a specific persona.',
-    icon: PortraitIcon,
     subtypes: ['Standard Transformation'], 
     filters: [
       { id: 'userImage', label: 'Upload Your Photo (Optional)', type: 'file' },
@@ -179,7 +161,6 @@ Finally, provide 5 relevant tags.`,
     id: PREDEFINED_CATEGORIES.WRITING,
     name: 'Writing',
     description: 'Craft prompts for articles, stories, and other written content.',
-    icon: WritingIcon,
     subtypes: ['Blog Post', 'Short Story', 'Marketing Copy', 'Email', 'Poem', 'Technical Documentation', 'Script/Screenplay', 'Academic Paper'],
     filters: [
         { id: 'tone', label: 'Tone of Voice', type: 'select', options: [
@@ -226,7 +207,6 @@ Finally, provide 5 relevant tags for the topic.`,
     id: PREDEFINED_CATEGORIES.CODE,
     name: 'Code',
     description: 'Generate programming-related prompts for snippets and logic.',
-    icon: CodeIcon,
     subtypes: ['Function', 'Component', 'Algorithm', 'Test Case', 'Query', 'API Endpoint', 'Class/Object', 'Regex Pattern'],
     filters: [
         { id: 'language', label: 'Programming Language', type: 'select', options: [
@@ -273,7 +253,6 @@ Finally, provide 5 relevant technical tags.`,
     id: PREDEFINED_CATEGORIES.VIDEO,
     name: 'Video',
     description: 'Design prompts for video script ideas and storyboards.',
-    icon: VideoIcon,
     subtypes: ['YouTube Script', 'Short Film Idea', 'Ad Script', 'Explainer Video', 'Music Video Concept', 'Documentary Treatment', 'B-Roll Shot List'],
     filters: [
         { id: 'duration', label: 'Target Duration', type: 'select', options: [
@@ -316,7 +295,6 @@ Finally, provide 5 relevant tags for the video content.`,
     id: PREDEFINED_CATEGORIES.CHAT,
     name: 'Chatbot',
     description: 'Define personas and instructions for conversational AIs.',
-    icon: ChatIcon,
     subtypes: ['Customer Support', 'Personal Assistant', 'Tutor', 'Roleplay Character', 'Onboarding Guide', 'Sales Agent', 'FAQ Bot'],
     filters: [
         { id: 'persona', label: 'Bot Persona', type: 'textarea', placeholder: 'e.g., a friendly and helpful guide, a witty Shakespearean poet' },
@@ -352,7 +330,6 @@ Finally, provide 5 tags describing the chatbot's function.`,
     id: PREDEFINED_CATEGORIES.BUSINESS,
     name: 'Business',
     description: 'Prompts for business plans, emails, and marketing strategies.',
-    icon: BusinessIcon,
     subtypes: ['Business Plan', 'SWOT Analysis', 'Marketing Strategy', 'Press Release', 'Executive Summary', 'Pitch Deck Outline', 'User Persona'],
     filters: [
         { id: 'industry', label: 'Industry', type: 'textarea', placeholder: 'e.g., SaaS, retail, healthcare' },
@@ -390,7 +367,6 @@ Finally, provide 5 relevant business tags.`,
     id: PREDEFINED_CATEGORIES.EDUCATION,
     name: 'Education',
     description: 'Prompts for lesson plans, quizzes, and learning materials.',
-    icon: EducationIcon,
     subtypes: ['Lesson Plan', 'Quiz', 'Study Guide', 'Language Practice', 'Course Outline', 'Essay Prompt', 'Flashcard Set'],
     filters: [
       { id: 'level', label: 'Grade Level', type: 'select', options: [
@@ -437,7 +413,6 @@ Finally, provide 5 relevant educational tags.`,
     id: PREDEFINED_CATEGORIES.PRODUCTIVITY,
     name: 'Productivity',
     description: 'Prompts for resumes, interview prep, and goal setting.',
-    icon: ProductivityIcon,
     subtypes: ['Resume Bullets', 'Interview Prep', 'Daily Planner', 'Goal Setting', 'Cover Letter', 'Meeting Agenda', 'Project Plan'],
     filters: [
       { id: 'role', label: 'Job Role', type: 'textarea', placeholder: 'e.g., Software Engineer, Project Manager' },
@@ -481,7 +456,6 @@ Finally, provide 5 relevant tags for career development.`,
     id: PREDEFINED_CATEGORIES.SEO,
     name: 'SEO',
     description: 'Generate prompts for SEO-optimized content and strategies.',
-    icon: SeoIcon,
     subtypes: ['Blog Outline', 'Meta Descriptions', 'FAQ Schema', 'Keyword Clustering', 'Topic Cluster Strategy', 'Content Brief'],
     filters: [
       { id: 'keyword', label: 'Target Keyword', type: 'textarea', placeholder: 'e.g., "AI prompt generator"' },
@@ -525,7 +499,6 @@ Finally, provide 5 relevant SEO and content marketing tags.`,
     id: PREDEFINED_CATEGORIES.DESIGN,
     name: 'Design',
     description: 'Prompts for logos, UI mockups, and branding concepts.',
-    icon: DesignIcon,
     subtypes: ['Logo Concepts', 'UI Mockup', 'Moodboard', 'Typography Pairing', 'Icon Set', 'Brand Style Guide', 'Website Landing Page'],
     filters: [
       { id: 'personality', label: 'Brand Personality', type: 'textarea', placeholder: 'e.g., minimalist, rugged, playful' },
@@ -565,7 +538,6 @@ Finally, provide 5 relevant design tags.`,
     id: PREDEFINED_CATEGORIES.SOCIAL_MEDIA,
     name: 'Social Media',
     description: 'Prompts for TikTok scripts, Instagram captions, and Twitter threads.',
-    icon: SocialMediaIcon,
     subtypes: ['Instagram Caption', 'Twitter Thread', 'TikTok Script', 'LinkedIn Post', 'YouTube Video Idea', 'Pinterest Pin Description'],
     filters: [
       { id: 'tone', label: 'Tone', type: 'select', options: [
@@ -611,7 +583,6 @@ Finally, provide 5 relevant tags for the content.`,
     id: PREDEFINED_CATEGORIES.FASHION,
     name: 'Fashion',
     description: 'Prompts for editorial photography, outfit design, and concepts.',
-    icon: FashionIcon,
     subtypes: ['Editorial Photoshoot', 'Outfit Design', 'Model Pose', 'Fabric Concept', 'Accessory Design', 'Lookbook Concept'],
     filters: [
       { id: 'season', label: 'Season', type: 'select', options: [
@@ -661,7 +632,6 @@ Finally, provide 5 relevant fashion tags.`,
     id: PREDEFINED_CATEGORIES.ART_STYLE,
     name: 'Art Style',
     description: 'Explore and generate prompts for specific art styles.',
-    icon: ArtStyleIcon,
     subtypes: ['Cyberpunk', 'Fantasy', 'Realism', 'Abstract', '3D Render', 'Surrealism', 'Impressionism', 'Minimalism', 'Pop Art', 'Vaporwave'],
     filters: [
       { id: 'detail', label: 'Detail Level', type: 'select', options: [

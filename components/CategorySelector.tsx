@@ -1,6 +1,7 @@
 import React from 'react';
 import type { Category, CategoryID } from '../types';
 import { Tooltip } from './Tooltip';
+import { CATEGORY_ICONS } from './icons/categoryIconMap';
 
 interface CategorySelectorProps {
   categories: Category[];
@@ -12,7 +13,9 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({ categories, 
   return (
     <div className="mb-8">
       <div className="flex justify-center flex-wrap gap-2 md:gap-3">
-        {categories.map((category) => (
+        {categories.map((category) => {
+          const Icon = CATEGORY_ICONS[category.id];
+          return (
           <Tooltip key={category.id} content={category.description}>
             <button
               onClick={() => setSelectedCategoryId(category.id)}
@@ -23,11 +26,12 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({ categories, 
                 }`
               }
             >
-              <category.icon className="h-5 w-5" />
+              {Icon ? <Icon className="h-5 w-5" /> : null}
               <span>{category.name}</span>
             </button>
           </Tooltip>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

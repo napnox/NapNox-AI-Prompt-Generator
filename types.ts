@@ -1,5 +1,3 @@
-// Fix: Import React type.
-import type React from 'react';
 import type { PREDEFINED_CATEGORIES } from './constants';
 
 export type CategoryID = (typeof PREDEFINED_CATEGORIES)[keyof typeof PREDEFINED_CATEGORIES];
@@ -22,7 +20,6 @@ export interface Category {
   id: CategoryID;
   name: string;
   description: string;
-  icon: React.ComponentType<{ className?: string }>;
   subtypes: string[];
   filters: Filter[];
   platform: {
